@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { TurntfWebClient } from "./index";
+import type { FetchLike } from "./types";
 
 function createMessage(seq: number) {
   return {
@@ -15,6 +16,7 @@ function createMessage(seq: number) {
 describe("TurntfWebClient", () => {
   it("sends login ids as numbers", async () => {
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      void init;
       return new Response(
         JSON.stringify({
           token: "token",
@@ -35,7 +37,7 @@ describe("TurntfWebClient", () => {
 
   it("emits snapshot first and only pushes newer message deltas", async () => {
     const fetchMock = vi
-      .fn<Parameters<typeof fetch>, ReturnType<typeof fetch>>()
+      .fn()
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ items: [createMessage(1), createMessage(2)] }), {
           status: 200,
@@ -51,7 +53,7 @@ describe("TurntfWebClient", () => {
 
     const snapshotSpy = vi.fn();
     const deltaSpy = vi.fn();
-    const client = new TurntfWebClient({ baseUrl: "/api", fetch: fetchMock });
+    const client = new TurntfWebClient({ baseUrl: "/api", fetch: fetchMock as FetchLike });
     const watcher = client.watchMessagesByUser("token", 1, 2, {
       intervalMs: 60_000,
       onSnapshot: snapshotSpy,
