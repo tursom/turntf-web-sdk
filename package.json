@@ -1,22 +1,50 @@
 {
   "name": "@tursom/turntf-web-sdk",
   "version": "0.1.0",
-  "private": true,
+  "description": "Browser-friendly SDK for turntf.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tursom/turntf-web-sdk.git"
+  },
+  "homepage": "https://github.com/tursom/turntf-web-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/tursom/turntf-web-sdk/issues"
+  },
   "type": "module",
   "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "pack:check": "npm pack --dry-run --cache .npm-cache",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
-    }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "keywords": [
+    "turntf",
+    "sdk",
+    "browser",
+    "typescript",
+    "web"
+  ],
   "devDependencies": {
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"

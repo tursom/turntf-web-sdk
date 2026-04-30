@@ -28,5 +28,29 @@
 ```bash
 npm install
 npm run typecheck
+npm run build
 npm test
 ```
+
+## 安装
+
+先配置 `.npmrc`：
+
+```ini
+@tursom:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+然后安装：
+
+```bash
+npm install @tursom/turntf-web-sdk
+```
+
+## 发布
+
+仓库内置了 GitHub Actions 发布工作流：
+
+- 推送 `v*` tag 时自动发布到 GitHub Packages
+- tag 去掉前缀 `v` 后，必须与 `package.json.version` 完全一致
+- 发布前会自动执行 `npm ci`、`typecheck`、`test`、`build` 和 `pack:check`
