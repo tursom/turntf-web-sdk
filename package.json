@@ -1,7 +1,7 @@
 {
   "name": "@tursom/turntf-web-sdk",
-  "version": "0.1.3",
-  "description": "Browser-friendly SDK for turntf.",
+  "version": "0.2.0",
+  "description": "Browser SDK for turntf with full HTTP and WebSocket support.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tursom/turntf-web-sdk.git"
@@ -16,12 +16,14 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "proto",
     "README.md"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "gen:proto": "protoc -I proto --ts_out src/generated --ts_opt long_type_string proto/client.proto && node scripts/postprocess-generated.mjs",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
     "prepare": "npm run build",
@@ -38,6 +40,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./proto/client.proto": "./proto/client.proto",
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -45,10 +48,21 @@
     "sdk",
     "browser",
     "typescript",
-    "web"
+    "websocket",
+    "protobuf"
   ],
+  "dependencies": {
+    "@protobuf-ts/runtime": "^2.11.1",
+    "bcryptjs": "^3.0.2",
+    "json-bigint": "^1.0.0"
+  },
   "devDependencies": {
-    "typescript": "^5.6.0",
-    "vitest": "^2.1.0"
+    "@protobuf-ts/plugin": "^2.11.1",
+    "@types/json-bigint": "^1.0.4",
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "ws": "^8.18.3"
   }
 }
