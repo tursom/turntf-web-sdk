@@ -22,3 +22,11 @@
 - 其他 HTTP JSON 管理接口
 - `WebSocket + protobuf` 实时能力
 - 自动重连、`session_ref`、`ack`、瞬时包等高级协议语义
+
+## 本地开发
+
+```bash
+npm install
+npm run typecheck
+npm test
+```
