@@ -52,10 +52,11 @@ export class HTTPClient {
       throw new Error("baseUrl is required");
     }
     this.baseUrl = baseUrl.replace(/\/+$/, "");
-    this.fetchImpl = options.fetch ?? globalThis.fetch;
-    if (this.fetchImpl == null) {
+    const fetchImpl = options.fetch ?? bindDefaultFetch();
+    if (fetchImpl == null) {
       throw new Error("fetch is required");
     }
+    this.fetchImpl = fetchImpl;
   }
 
   async login(nodeId: string, userId: string, password: string, options?: RequestOptions): Promise<string> {
@@ -466,6 +467,14 @@ function validateLimit(value: number, field: string): void {
   if (!Number.isInteger(value) || value < 0) {
     throw new Error(`${field} must be a non-negative integer`);
   }
+}
+
+function bindDefaultFetch(): typeof fetch | undefined {
+  const fetchImpl = globalThis.fetch;
+  if (typeof fetchImpl !== "function") {
+    return undefined;
+  }
+  return fetchImpl.bind(globalThis) as typeof fetch;
 }
 
 function itemsField(value: unknown, keys: string[]): unknown[] {

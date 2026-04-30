@@ -407,6 +407,47 @@ describe("HTTPClient", () => {
     await expect(timeoutClient.metrics("token", { timeoutMs: 20 })).rejects.toThrow("operation timed out");
   });
 
+  it("binds the default global fetch implementation for browser-style invocation", async () => {
+    const originalFetch = globalThis.fetch;
+    const calls: Array<{ thisValue: unknown; url: string }> = [];
+    const browserStyleFetch = function (
+      this: unknown,
+      input: RequestInfo | URL
+    ): Promise<Response> {
+      if (this !== globalThis) {
+        throw new TypeError("Illegal invocation");
+      }
+      const url = typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
+      calls.push({ thisValue: this, url });
+      return Promise.resolve(jsonResponse({ token: "token-bound" }));
+    } as typeof fetch;
+
+    Object.defineProperty(globalThis, "fetch", {
+      configurable: true,
+      writable: true,
+      value: browserStyleFetch
+    });
+
+    try {
+      const client = new HTTPClient("http://127.0.0.1:8080");
+      const token = await client.login("4096", "1", "root-password");
+      expect(token).toBe("token-bound");
+      expect(calls).toEqual([
+        { thisValue: globalThis, url: "http://127.0.0.1:8080/auth/login" }
+      ]);
+    } finally {
+      Object.defineProperty(globalThis, "fetch", {
+        configurable: true,
+        writable: true,
+        value: originalFetch
+      });
+    }
+  });
+
   it("serializes empty attachment config as an object and parses wrapped attachment responses", async () => {
     let bodyText = "";
     const client = new HTTPClient("http://127.0.0.1:8080", {
