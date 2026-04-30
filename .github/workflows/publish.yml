@@ -24,9 +24,6 @@ jobs:
           registry-url: https://registry.npmjs.org
           scope: "@tursom"
 
-      - name: Upgrade npm
-        run: npm install -g npm@latest
-
       - name: Install dependencies
         run: npm ci
 
@@ -52,7 +49,7 @@ jobs:
         run: npm run pack:check
 
       - name: Publish package
-        run: npm publish --access public
+        run: npx --yes npm@11.6.2 publish --access public
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
