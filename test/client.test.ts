@@ -403,6 +403,94 @@ describe("Client", () => {
       });
       expect((await deletePromise).status).toBe("deleted");
 
+      const upsertMetadataPromise = client.upsertUserMetadata(target, "session:web:1", {
+        value: new Uint8Array([0xff, 0x00, 0x78]),
+        expiresAt: "2026-04-29T00:00:00Z"
+      });
+      const upsertMetadataReq = await conn.readClientEnvelope();
+      const upsertMetadataBody = clientBody(upsertMetadataReq, "upsertUserMetadata");
+      expect(upsertMetadataBody.upsertUserMetadata.owner).toEqual(target);
+      expect(upsertMetadataBody.upsertUserMetadata.key).toBe("session:web:1");
+      expect(Array.from(upsertMetadataBody.upsertUserMetadata.value)).toEqual([0xff, 0x00, 0x78]);
+      expect(upsertMetadataBody.upsertUserMetadata.expiresAt?.value).toBe("2026-04-29T00:00:00Z");
+      await conn.sendServerEnvelope({
+        body: {
+          oneofKind: "upsertUserMetadataResponse",
+          upsertUserMetadataResponse: {
+            requestId: upsertMetadataBody.upsertUserMetadata.requestId,
+            metadata: userMetadataRecord(target, "session:web:1", new Uint8Array([0xff, 0x00, 0x78]), {
+              expiresAt: "2026-04-29T00:00:00Z"
+            })
+          }
+        }
+      });
+      expect((await upsertMetadataPromise).expiresAt).toBe("2026-04-29T00:00:00Z");
+
+      const getMetadataPromise = client.getUserMetadata(target, "session:web:1");
+      const getMetadataReq = await conn.readClientEnvelope();
+      const getMetadataBody = clientBody(getMetadataReq, "getUserMetadata");
+      expect(getMetadataBody.getUserMetadata.owner).toEqual(target);
+      expect(getMetadataBody.getUserMetadata.key).toBe("session:web:1");
+      await conn.sendServerEnvelope({
+        body: {
+          oneofKind: "getUserMetadataResponse",
+          getUserMetadataResponse: {
+            requestId: getMetadataBody.getUserMetadata.requestId,
+            metadata: userMetadataRecord(target, "session:web:1", new Uint8Array([0xff, 0x00, 0x78]), {
+              expiresAt: "2026-04-29T00:00:00Z"
+            })
+          }
+        }
+      });
+      expect(Array.from((await getMetadataPromise).value)).toEqual([0xff, 0x00, 0x78]);
+
+      const scanMetadataPromise = client.scanUserMetadata(target, {
+        prefix: "session:",
+        after: "session:web:1",
+        limit: 1
+      });
+      const scanMetadataReq = await conn.readClientEnvelope();
+      const scanMetadataBody = clientBody(scanMetadataReq, "scanUserMetadata");
+      expect(scanMetadataBody.scanUserMetadata.owner).toEqual(target);
+      expect(scanMetadataBody.scanUserMetadata.prefix).toBe("session:");
+      expect(scanMetadataBody.scanUserMetadata.after).toBe("session:web:1");
+      expect(scanMetadataBody.scanUserMetadata.limit).toBe(1);
+      await conn.sendServerEnvelope({
+        body: {
+          oneofKind: "scanUserMetadataResponse",
+          scanUserMetadataResponse: {
+            requestId: scanMetadataBody.scanUserMetadata.requestId,
+            items: [
+              userMetadataRecord(target, "session:web:2", Buffer.from("second"))
+            ],
+            count: 1,
+            nextAfter: ""
+          }
+        }
+      });
+      const scannedMetadata = await scanMetadataPromise;
+      expect(scannedMetadata.count).toBe(1);
+      expect(scannedMetadata.items[0]?.key).toBe("session:web:2");
+
+      const deleteMetadataPromise = client.deleteUserMetadata(target, "session:web:1");
+      const deleteMetadataReq = await conn.readClientEnvelope();
+      const deleteMetadataBody = clientBody(deleteMetadataReq, "deleteUserMetadata");
+      expect(deleteMetadataBody.deleteUserMetadata.owner).toEqual(target);
+      expect(deleteMetadataBody.deleteUserMetadata.key).toBe("session:web:1");
+      await conn.sendServerEnvelope({
+        body: {
+          oneofKind: "deleteUserMetadataResponse",
+          deleteUserMetadataResponse: {
+            requestId: deleteMetadataBody.deleteUserMetadata.requestId,
+            metadata: userMetadataRecord(target, "session:web:1", new Uint8Array([0xff, 0x00, 0x78]), {
+              deletedAt: "2026-04-28T03:10:00Z",
+              expiresAt: "2026-04-29T00:00:00Z"
+            })
+          }
+        }
+      });
+      expect((await deleteMetadataPromise).deletedAt).toBe("2026-04-28T03:10:00Z");
+
       const subscribePromise = client.subscribeChannel(target, channel);
       const subscribeReq = await conn.readClientEnvelope();
       const subscribeBody = clientBody(subscribeReq, "upsertUserAttachment");
@@ -1204,6 +1292,23 @@ function attachmentRecord(
     attachedAt: "2026-04-28T00:00:00Z",
     deletedAt: "",
     originNodeId: "4096"
+  };
+}
+
+function userMetadataRecord(
+  owner: UserRef,
+  key: string,
+  value: Uint8Array,
+  overrides: Partial<Pick<proto.UserMetadata, "deletedAt" | "expiresAt" | "updatedAt" | "originNodeId">> = {}
+): proto.UserMetadata {
+  return {
+    owner,
+    key,
+    value,
+    updatedAt: overrides.updatedAt ?? "2026-04-28T03:00:00Z",
+    deletedAt: overrides.deletedAt ?? "",
+    expiresAt: overrides.expiresAt ?? "",
+    originNodeId: overrides.originNodeId ?? "4096"
   };
 }
 

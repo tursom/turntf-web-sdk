@@ -14,10 +14,12 @@ import {
   type PeerStatus as ProtoPeerStatus,
   type ProjectionStatus as ProtoProjectionStatus,
   type ResolveUserSessionsResponse as ProtoResolveUserSessionsResponse,
+  type ScanUserMetadataResponse as ProtoScanUserMetadataResponse,
   type ResolvedSession as ProtoResolvedSession,
   type SessionRef as ProtoSessionRef,
   type TransientAccepted as ProtoTransientAccepted,
   type User as ProtoUser,
+  type UserMetadata as ProtoUserMetadata,
   type UserRef as ProtoUserRef
 } from "./generated/client";
 import { ProtocolError } from "./errors";
@@ -41,9 +43,11 @@ import {
   type ResolveUserSessionsResult,
   type RelayAccepted,
   type ResolvedSession,
+  type ScanUserMetadataResult,
   type SessionRef,
   type Subscription,
   type User,
+  type UserMetadata,
   type UserRef
 } from "./types";
 import { cloneBytes } from "./utils";
@@ -217,6 +221,34 @@ export function blacklistEntryFromProto(entry: ProtoAttachment | undefined): Bla
     blockedAt: attachment.attachedAt,
     deletedAt: attachment.deletedAt,
     originNodeId: attachment.originNodeId
+  };
+}
+
+export function userMetadataFromProto(metadata: ProtoUserMetadata | undefined): UserMetadata {
+  if (metadata == null) {
+    throw new ProtocolError("missing user metadata");
+  }
+  return {
+    owner: userRefFromProto(metadata.owner),
+    key: metadata.key,
+    value: cloneBytes(metadata.value),
+    updatedAt: metadata.updatedAt,
+    deletedAt: metadata.deletedAt,
+    expiresAt: metadata.expiresAt,
+    originNodeId: metadata.originNodeId
+  };
+}
+
+export function scanUserMetadataResultFromProto(
+  response: ProtoScanUserMetadataResponse | undefined
+): ScanUserMetadataResult {
+  if (response == null) {
+    throw new ProtocolError("missing scan_user_metadata_response");
+  }
+  return {
+    items: response.items.map(userMetadataFromProto),
+    count: response.count,
+    nextAfter: response.nextAfter
   };
 }
 

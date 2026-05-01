@@ -105,6 +105,16 @@ export interface BlacklistEntry {
   originNodeId: string;
 }
 
+export interface UserMetadata {
+  owner: UserRef;
+  key: string;
+  value: Uint8Array;
+  updatedAt: string;
+  deletedAt: string;
+  expiresAt: string;
+  originNodeId: string;
+}
+
 export interface Event {
   sequence: string;
   eventId: string;
@@ -239,6 +249,23 @@ export interface UpdateUserRequest {
   password?: PasswordInput;
   profileJson?: Uint8Array;
   role?: string;
+}
+
+export interface UpsertUserMetadataRequest {
+  value: Uint8Array;
+  expiresAt?: string;
+}
+
+export interface ScanUserMetadataRequest {
+  prefix?: string;
+  after?: string;
+  limit?: number;
+}
+
+export interface ScanUserMetadataResult {
+  items: UserMetadata[];
+  count: number;
+  nextAfter: string;
 }
 
 export interface RequestOptions {

@@ -1,6 +1,6 @@
 {
   "name": "@tursom/turntf-web-sdk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Browser SDK for turntf with full HTTP and WebSocket support.",
   "repository": {
     "type": "git",

@@ -4,6 +4,7 @@ import {
   ClientMessageSyncMode,
   ServerEnvelope as ProtoServerEnvelope,
   type SendMessageResponse as ProtoSendMessageResponse,
+  type UpsertUserMetadataRequest as ProtoUpsertUserMetadataRequest,
   type UpdateUserRequest as ProtoUpdateUserRequest
 } from "./generated/client";
 import {
@@ -28,9 +29,11 @@ import {
   packetFromProto,
   relayAcceptedFromProto,
   resolveUserSessionsFromProto,
+  scanUserMetadataResultFromProto,
   sessionRefFromProto,
   sessionRefToProto,
   userFromProto,
+  userMetadataFromProto,
   userRefToProto
 } from "./mapping";
 import { passwordWireValue, validatePassword, type PasswordInput } from "./password";
@@ -53,11 +56,15 @@ import type {
   RelayAccepted,
   RequestOptions,
   ResolveUserSessionsResult,
+  ScanUserMetadataRequest,
+  ScanUserMetadataResult,
   SendPacketOptions,
   SessionRef,
   Subscription,
   UpdateUserRequest,
   User,
+  UserMetadata,
+  UpsertUserMetadataRequest,
   UserRef
 } from "./types";
 import { abortReason, createDeferred, ensureConnectionError, mergeAbortSignals, sleep, type Deferred } from "./utils";
@@ -67,6 +74,8 @@ import {
   toWireInteger,
   validateDeliveryMode,
   validateSessionRef,
+  validateUserMetadataKey,
+  validateUserMetadataScanRequest,
   validateUserRef
 } from "./validation";
 
@@ -443,6 +452,116 @@ export class Client {
     );
     if (!isDeleteUserResult(result)) {
       throw new ProtocolError("missing status in delete_user_response");
+    }
+    return result;
+  }
+
+  async getUserMetadata(owner: UserRef, key: string, options?: RequestOptions): Promise<UserMetadata> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataKey(key);
+
+    const result = await this.rpc(
+      (requestId) => ({
+        body: {
+          oneofKind: "getUserMetadata",
+          getUserMetadata: {
+            requestId,
+            owner: userRefToProto(owner),
+            key
+          }
+        }
+      }),
+      options
+    );
+    if (!isUserMetadata(result)) {
+      throw new ProtocolError("missing metadata in get_user_metadata_response");
+    }
+    return result;
+  }
+
+  async upsertUserMetadata(
+    owner: UserRef,
+    key: string,
+    request: UpsertUserMetadataRequest,
+    options?: RequestOptions
+  ): Promise<UserMetadata> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataKey(key);
+
+    const result = await this.rpc(
+      (requestId) => {
+        const upsertUserMetadata: ProtoUpsertUserMetadataRequest = {
+          requestId,
+          owner: userRefToProto(owner),
+          key,
+          value: new Uint8Array(request.value)
+        };
+        if (request.expiresAt != null) {
+          upsertUserMetadata.expiresAt = { value: request.expiresAt };
+        }
+        return {
+          body: {
+            oneofKind: "upsertUserMetadata",
+            upsertUserMetadata
+          }
+        };
+      },
+      options
+    );
+    if (!isUserMetadata(result)) {
+      throw new ProtocolError("missing metadata in upsert_user_metadata_response");
+    }
+    return result;
+  }
+
+  async deleteUserMetadata(owner: UserRef, key: string, options?: RequestOptions): Promise<UserMetadata> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataKey(key);
+
+    const result = await this.rpc(
+      (requestId) => ({
+        body: {
+          oneofKind: "deleteUserMetadata",
+          deleteUserMetadata: {
+            requestId,
+            owner: userRefToProto(owner),
+            key
+          }
+        }
+      }),
+      options
+    );
+    if (!isUserMetadata(result)) {
+      throw new ProtocolError("missing metadata in delete_user_metadata_response");
+    }
+    return result;
+  }
+
+  async scanUserMetadata(
+    owner: UserRef,
+    request: ScanUserMetadataRequest = {},
+    options?: RequestOptions
+  ): Promise<ScanUserMetadataResult> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataScanRequest(request);
+
+    const result = await this.rpc(
+      (requestId) => ({
+        body: {
+          oneofKind: "scanUserMetadata",
+          scanUserMetadata: {
+            requestId,
+            owner: userRefToProto(owner),
+            prefix: request.prefix ?? "",
+            after: request.after ?? "",
+            limit: request.limit ?? 0
+          }
+        }
+      }),
+      options
+    );
+    if (!isScanUserMetadataResult(result)) {
+      throw new ProtocolError("missing metadata in scan_user_metadata_response");
     }
     return result;
   }
@@ -933,6 +1052,30 @@ export class Client {
             userId: env.body.deleteUserResponse.user?.userId ?? "0"
           }
         } satisfies DeleteUserResult);
+        return;
+      case "getUserMetadataResponse":
+        this.resolvePending(
+          env.body.getUserMetadataResponse.requestId,
+          userMetadataFromProto(env.body.getUserMetadataResponse.metadata)
+        );
+        return;
+      case "upsertUserMetadataResponse":
+        this.resolvePending(
+          env.body.upsertUserMetadataResponse.requestId,
+          userMetadataFromProto(env.body.upsertUserMetadataResponse.metadata)
+        );
+        return;
+      case "deleteUserMetadataResponse":
+        this.resolvePending(
+          env.body.deleteUserMetadataResponse.requestId,
+          userMetadataFromProto(env.body.deleteUserMetadataResponse.metadata)
+        );
+        return;
+      case "scanUserMetadataResponse":
+        this.resolvePending(
+          env.body.scanUserMetadataResponse.requestId,
+          scanUserMetadataResultFromProto(env.body.scanUserMetadataResponse)
+        );
         return;
       case "listMessagesResponse":
         this.resolvePending(env.body.listMessagesResponse.requestId, env.body.listMessagesResponse.items.map(messageFromProto));
@@ -1464,6 +1607,14 @@ function isAttachment(value: unknown): value is Attachment {
 
 function isDeleteUserResult(value: unknown): value is DeleteUserResult {
   return value != null && typeof value === "object" && "status" in value && "user" in value;
+}
+
+function isUserMetadata(value: unknown): value is UserMetadata {
+  return value != null && typeof value === "object" && "owner" in value && "key" in value && "value" in value;
+}
+
+function isScanUserMetadataResult(value: unknown): value is ScanUserMetadataResult {
+  return value != null && typeof value === "object" && "items" in value && "count" in value && "nextAfter" in value;
 }
 
 function isResolveUserSessionsResult(value: unknown): value is ResolveUserSessionsResult {

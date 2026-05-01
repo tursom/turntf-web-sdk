@@ -1,6 +1,15 @@
-import { DeliveryMode, type Message, type MessageCursor, type SessionRef, type UserRef } from "./types";
+import {
+  DeliveryMode,
+  type Message,
+  type MessageCursor,
+  type ScanUserMetadataRequest,
+  type SessionRef,
+  type UserRef
+} from "./types";
 
 const unsignedDecimalPattern = /^(0|[1-9][0-9]*)$/;
+const userMetadataKeyMaxLength = 128;
+const userMetadataScanLimitMax = 1000;
 
 export function assertDecimalString(value: string, field: string): void {
   if (!unsignedDecimalPattern.test(value)) {
@@ -30,6 +39,25 @@ export function validateSessionRef(ref: SessionRef, field = "session"): void {
 export function validateDeliveryMode(mode: DeliveryMode): void {
   if (mode !== DeliveryMode.BestEffort && mode !== DeliveryMode.RouteRetry) {
     throw new Error(`invalid deliveryMode ${JSON.stringify(mode)}`);
+  }
+}
+
+export function validateUserMetadataKey(key: string, field = "key"): void {
+  validateUserMetadataKeyFragment(key, field, false);
+}
+
+export function validateUserMetadataScanRequest(request: ScanUserMetadataRequest, field = "request"): void {
+  const prefix = request.prefix ?? "";
+  const after = request.after ?? "";
+
+  validateUserMetadataKeyFragment(prefix, `${field}.prefix`, true);
+  validateUserMetadataKeyFragment(after, `${field}.after`, true);
+
+  if (request.limit != null) {
+    validateUserMetadataScanLimit(request.limit, `${field}.limit`);
+  }
+  if (after !== "" && prefix !== "" && !after.startsWith(prefix)) {
+    throw new Error(`${field}.after must use the same prefix as ${field}.prefix`);
   }
 }
 
@@ -64,4 +92,42 @@ export function idToString(value: unknown): string {
     return "0";
   }
   return String(value);
+}
+
+function validateUserMetadataScanLimit(value: number, field: string): void {
+  if (!Number.isInteger(value)) {
+    throw new Error(`${field} must be an integer`);
+  }
+  if (value < 0) {
+    throw new Error(`${field} must be non-negative`);
+  }
+  if (value > userMetadataScanLimitMax) {
+    throw new Error(`${field} cannot exceed ${userMetadataScanLimitMax}`);
+  }
+}
+
+function validateUserMetadataKeyFragment(value: string, field: string, allowEmpty: boolean): void {
+  if (value === "") {
+    if (allowEmpty) {
+      return;
+    }
+    throw new Error(`${field} cannot be empty`);
+  }
+  if (value.length > userMetadataKeyMaxLength) {
+    throw new Error(`${field} cannot exceed ${userMetadataKeyMaxLength} characters`);
+  }
+  for (const ch of value) {
+    switch (true) {
+      case ch >= "a" && ch <= "z":
+      case ch >= "A" && ch <= "Z":
+      case ch >= "0" && ch <= "9":
+      case ch === ".":
+      case ch === "_":
+      case ch === ":":
+      case ch === "-":
+        break;
+      default:
+        throw new Error(`${field} contains unsupported character ${JSON.stringify(ch)}`);
+    }
+  }
 }

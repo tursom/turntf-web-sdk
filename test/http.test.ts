@@ -75,6 +75,52 @@ describe("HTTPClient", () => {
                 user_id: 1025
               }
             });
+          case "PUT /nodes/4096/users/1025/metadata/session%3Aweb%3A1":
+            return jsonResponse({
+              owner: { node_id: 4096, user_id: 1025 },
+              key: "session:web:1",
+              value: "/wB4",
+              updated_at: "2026-04-28T03:00:00Z",
+              deleted_at: "",
+              expires_at: "2026-04-29T00:00:00Z",
+              origin_node_id: "4096"
+            }, 201);
+          case "GET /nodes/4096/users/1025/metadata/session%3Aweb%3A1":
+            return jsonResponse({
+              owner: { node_id: "4096", user_id: "1025" },
+              key: "session:web:1",
+              value: "/wB4",
+              updated_at: "2026-04-28T03:00:00Z",
+              deleted_at: "",
+              expires_at: "2026-04-29T00:00:00Z",
+              origin_node_id: 4096
+            });
+          case "GET /nodes/4096/users/1025/metadata?prefix=session%3A&after=session%3Aweb%3A1&limit=1":
+            return jsonResponse({
+              items: [
+                {
+                  owner: { node_id: "4096", user_id: "1025" },
+                  key: "session:web:2",
+                  value: "c2Vjb25k",
+                  updated_at: "2026-04-28T03:05:00Z",
+                  deleted_at: "",
+                  expires_at: "",
+                  origin_node_id: "4096"
+                }
+              ],
+              count: 1,
+              next_after: ""
+            });
+          case "DELETE /nodes/4096/users/1025/metadata/session%3Aweb%3A1":
+            return jsonResponse({
+              owner: { node_id: "4096", user_id: "1025" },
+              key: "session:web:1",
+              value: "/wB4",
+              updated_at: "2026-04-28T03:00:00Z",
+              deleted_at: "2026-04-28T03:10:00Z",
+              expires_at: "2026-04-29T00:00:00Z",
+              origin_node_id: "4096"
+            });
           case "PUT /nodes/4096/users/1025/attachments/channel_subscription/4096/2048":
             return jsonResponse({
               owner: { node_id: 4096, user_id: 1025 },
@@ -287,6 +333,37 @@ describe("HTTPClient", () => {
       user: { nodeId: "4096", userId: "1025" }
     });
 
+    const upsertedMetadata = await client.upsertUserMetadata(
+      token,
+      { nodeId: "4096", userId: "1025" },
+      "session:web:1",
+      {
+        value: new Uint8Array([0xff, 0x00, 0x78]),
+        expiresAt: "2026-04-29T00:00:00Z"
+      }
+    );
+    expect(upsertedMetadata.key).toBe("session:web:1");
+    expect(Array.from(upsertedMetadata.value)).toEqual([0xff, 0x00, 0x78]);
+
+    const fetchedMetadata = await client.getUserMetadata(token, { nodeId: "4096", userId: "1025" }, "session:web:1");
+    expect(fetchedMetadata.expiresAt).toBe("2026-04-29T00:00:00Z");
+
+    const scannedMetadata = await client.scanUserMetadata(
+      token,
+      { nodeId: "4096", userId: "1025" },
+      { prefix: "session:", after: "session:web:1", limit: 1 }
+    );
+    expect(scannedMetadata.count).toBe(1);
+    expect(scannedMetadata.items[0]?.key).toBe("session:web:2");
+    expect(new TextDecoder().decode(scannedMetadata.items[0]!.value)).toBe("second");
+
+    const deletedMetadata = await client.deleteUserMetadata(
+      token,
+      { nodeId: "4096", userId: "1025" },
+      "session:web:1"
+    );
+    expect(deletedMetadata.deletedAt).toBe("2026-04-28T03:10:00Z");
+
     const subscribed = await client.subscribeChannel(
       token,
       { nodeId: "4096", userId: "1025" },
@@ -370,6 +447,12 @@ describe("HTTPClient", () => {
       username: "alice",
       role: "user",
       profile: { display_name: "Alice" }
+    });
+
+    const upsertMetadataCall = calls.find((call) => call.method === "PUT" && call.path === "/nodes/4096/users/1025/metadata/session%3Aweb%3A1");
+    expect(JSON.parse(upsertMetadataCall?.bodyText ?? "{}")).toEqual({
+      value: "/wB4",
+      expires_at: "2026-04-29T00:00:00Z"
     });
 
     const postMessageCall = calls.find((call) => call.method === "POST" && call.path === "/nodes/4096/users/1025/messages");

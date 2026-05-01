@@ -16,9 +16,13 @@ import {
   type PeerStatus,
   type ProjectionStatus,
   type RequestOptions,
+  type ScanUserMetadataRequest,
+  type ScanUserMetadataResult,
   type Subscription,
   type UpdateUserRequest,
   type User,
+  type UserMetadata,
+  type UpsertUserMetadataRequest,
   type UserRef
 } from "./types";
 import {
@@ -36,6 +40,8 @@ import {
   toRequiredWireInteger,
   toWireInteger,
   validateDeliveryMode,
+  validateUserMetadataKey,
+  validateUserMetadataScanRequest,
   validateUserRef
 } from "./validation";
 
@@ -171,6 +177,96 @@ export class HTTPClient {
       options
     );
     return deleteUserResultFromHTTP(response);
+  }
+
+  async getUserMetadata(token: string, owner: UserRef, key: string, options?: RequestOptions): Promise<UserMetadata> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataKey(key);
+
+    const response = await this.doJSON(
+      "GET",
+      `/nodes/${owner.nodeId}/users/${owner.userId}/metadata/${encodeURIComponent(key)}`,
+      token,
+      undefined,
+      [200],
+      options
+    );
+    return userMetadataFromHTTP(response);
+  }
+
+  async upsertUserMetadata(
+    token: string,
+    owner: UserRef,
+    key: string,
+    request: UpsertUserMetadataRequest,
+    options?: RequestOptions
+  ): Promise<UserMetadata> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataKey(key);
+
+    const body: Record<string, unknown> = {
+      value: bytesToBase64(request.value)
+    };
+    if (request.expiresAt != null) {
+      body.expires_at = request.expiresAt;
+    }
+
+    const response = await this.doJSON(
+      "PUT",
+      `/nodes/${owner.nodeId}/users/${owner.userId}/metadata/${encodeURIComponent(key)}`,
+      token,
+      body,
+      [200, 201],
+      options
+    );
+    return userMetadataFromHTTP(response);
+  }
+
+  async deleteUserMetadata(token: string, owner: UserRef, key: string, options?: RequestOptions): Promise<UserMetadata> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataKey(key);
+
+    const response = await this.doJSON(
+      "DELETE",
+      `/nodes/${owner.nodeId}/users/${owner.userId}/metadata/${encodeURIComponent(key)}`,
+      token,
+      undefined,
+      [200],
+      options
+    );
+    return userMetadataFromHTTP(response);
+  }
+
+  async scanUserMetadata(
+    token: string,
+    owner: UserRef,
+    request: ScanUserMetadataRequest = {},
+    options?: RequestOptions
+  ): Promise<ScanUserMetadataResult> {
+    validateUserRef(owner, "owner");
+    validateUserMetadataScanRequest(request);
+
+    const params = new URLSearchParams();
+    if (request.prefix != null && request.prefix !== "") {
+      params.set("prefix", request.prefix);
+    }
+    if (request.after != null && request.after !== "") {
+      params.set("after", request.after);
+    }
+    if (request.limit != null && request.limit > 0) {
+      params.set("limit", String(request.limit));
+    }
+    const suffix = params.size === 0 ? "" : `?${params.toString()}`;
+
+    const response = await this.doJSON(
+      "GET",
+      `/nodes/${owner.nodeId}/users/${owner.userId}/metadata${suffix}`,
+      token,
+      undefined,
+      [200],
+      options
+    );
+    return userMetadataScanResultFromHTTP(response);
   }
 
   async createSubscription(token: string, user: UserRef, channel: UserRef, options?: RequestOptions): Promise<Subscription> {
@@ -542,6 +638,27 @@ function attachmentFromHTTP(value: unknown): Attachment {
   };
 }
 
+function userMetadataFromHTTP(value: unknown): UserMetadata {
+  return {
+    owner: userRefFromHTTP(objectField(value, "owner")),
+    key: String(objectField(value, "key") ?? ""),
+    value: binaryBodyFromHTTP(objectField(value, "value")),
+    updatedAt: String(objectField(value, "updated_at") ?? ""),
+    deletedAt: String(objectField(value, "deleted_at") ?? ""),
+    expiresAt: String(objectField(value, "expires_at") ?? ""),
+    originNodeId: idToString(objectField(value, "origin_node_id"))
+  };
+}
+
+function userMetadataScanResultFromHTTP(value: unknown): ScanUserMetadataResult {
+  const items = itemsField(objectField(value, "items"), []);
+  return {
+    items: items.map(userMetadataFromHTTP),
+    count: numberField(objectField(value, "count") ?? items.length),
+    nextAfter: String(objectField(value, "next_after") ?? "")
+  };
+}
+
 function eventFromHTTP(value: unknown): Event {
   return {
     sequence: idToString(objectField(value, "sequence")),
@@ -698,6 +815,10 @@ function jsonValueToBytes(value: unknown, emptyObjectFallback = false): Uint8Arr
 }
 
 function messageBodyFromHTTP(value: unknown): Uint8Array {
+  return binaryBodyFromHTTP(value, "invalid base64 body");
+}
+
+function binaryBodyFromHTTP(value: unknown, errorMessage = "invalid base64 payload"): Uint8Array {
   if (value == null) {
     return new Uint8Array(0);
   }
@@ -710,7 +831,7 @@ function messageBodyFromHTTP(value: unknown): Uint8Array {
   if (Array.isArray(value)) {
     return Uint8Array.from(value.map((item) => numberField(item)));
   }
-  throw new ProtocolError("invalid base64 body");
+  throw new ProtocolError(errorMessage);
 }
 
 function numberField(value: unknown): number {

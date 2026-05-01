@@ -126,6 +126,30 @@ export interface ClientEnvelope {
          */
         resolveUserSessions: ResolveUserSessionsRequest;
     } | {
+        oneofKind: "getUserMetadata";
+        /**
+         * @generated from protobuf field: notifier.client.v1.GetUserMetadataRequest get_user_metadata = 19
+         */
+        getUserMetadata: GetUserMetadataRequest;
+    } | {
+        oneofKind: "upsertUserMetadata";
+        /**
+         * @generated from protobuf field: notifier.client.v1.UpsertUserMetadataRequest upsert_user_metadata = 20
+         */
+        upsertUserMetadata: UpsertUserMetadataRequest;
+    } | {
+        oneofKind: "deleteUserMetadata";
+        /**
+         * @generated from protobuf field: notifier.client.v1.DeleteUserMetadataRequest delete_user_metadata = 21
+         */
+        deleteUserMetadata: DeleteUserMetadataRequest;
+    } | {
+        oneofKind: "scanUserMetadata";
+        /**
+         * @generated from protobuf field: notifier.client.v1.ScanUserMetadataRequest scan_user_metadata = 22
+         */
+        scanUserMetadata: ScanUserMetadataRequest;
+    } | {
         oneofKind: undefined;
     };
 }
@@ -256,6 +280,30 @@ export interface ServerEnvelope {
          * @generated from protobuf field: notifier.client.v1.ResolveUserSessionsResponse resolve_user_sessions_response = 20
          */
         resolveUserSessionsResponse: ResolveUserSessionsResponse;
+    } | {
+        oneofKind: "getUserMetadataResponse";
+        /**
+         * @generated from protobuf field: notifier.client.v1.GetUserMetadataResponse get_user_metadata_response = 21
+         */
+        getUserMetadataResponse: GetUserMetadataResponse;
+    } | {
+        oneofKind: "upsertUserMetadataResponse";
+        /**
+         * @generated from protobuf field: notifier.client.v1.UpsertUserMetadataResponse upsert_user_metadata_response = 22
+         */
+        upsertUserMetadataResponse: UpsertUserMetadataResponse;
+    } | {
+        oneofKind: "deleteUserMetadataResponse";
+        /**
+         * @generated from protobuf field: notifier.client.v1.DeleteUserMetadataResponse delete_user_metadata_response = 23
+         */
+        deleteUserMetadataResponse: DeleteUserMetadataResponse;
+    } | {
+        oneofKind: "scanUserMetadataResponse";
+        /**
+         * @generated from protobuf field: notifier.client.v1.ScanUserMetadataResponse scan_user_metadata_response = 24
+         */
+        scanUserMetadataResponse: ScanUserMetadataResponse;
     } | {
         oneofKind: undefined;
     };
@@ -902,6 +950,150 @@ export interface ResolveUserSessionsResponse {
     count: number;
 }
 /**
+ * @generated from protobuf message notifier.client.v1.GetUserMetadataRequest
+ */
+export interface GetUserMetadataRequest {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserRef owner = 2
+     */
+    owner?: UserRef;
+    /**
+     * @generated from protobuf field: string key = 3
+     */
+    key: string;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.UpsertUserMetadataRequest
+ */
+export interface UpsertUserMetadataRequest {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserRef owner = 2
+     */
+    owner?: UserRef;
+    /**
+     * @generated from protobuf field: string key = 3
+     */
+    key: string;
+    /**
+     * @generated from protobuf field: bytes value = 4
+     */
+    value: Uint8Array;
+    /**
+     * @generated from protobuf field: notifier.client.v1.StringField expires_at = 5
+     */
+    expiresAt?: StringField;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.DeleteUserMetadataRequest
+ */
+export interface DeleteUserMetadataRequest {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserRef owner = 2
+     */
+    owner?: UserRef;
+    /**
+     * @generated from protobuf field: string key = 3
+     */
+    key: string;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.ScanUserMetadataRequest
+ */
+export interface ScanUserMetadataRequest {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserRef owner = 2
+     */
+    owner?: UserRef;
+    /**
+     * @generated from protobuf field: string prefix = 3
+     */
+    prefix: string;
+    /**
+     * @generated from protobuf field: string after = 4
+     */
+    after: string;
+    /**
+     * @generated from protobuf field: int32 limit = 5
+     */
+    limit: number;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.GetUserMetadataResponse
+ */
+export interface GetUserMetadataResponse {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserMetadata metadata = 2
+     */
+    metadata?: UserMetadata;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.UpsertUserMetadataResponse
+ */
+export interface UpsertUserMetadataResponse {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserMetadata metadata = 2
+     */
+    metadata?: UserMetadata;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.DeleteUserMetadataResponse
+ */
+export interface DeleteUserMetadataResponse {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserMetadata metadata = 2
+     */
+    metadata?: UserMetadata;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.ScanUserMetadataResponse
+ */
+export interface ScanUserMetadataResponse {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: repeated notifier.client.v1.UserMetadata items = 2
+     */
+    items: UserMetadata[];
+    /**
+     * @generated from protobuf field: int32 count = 3
+     */
+    count: number;
+    /**
+     * @generated from protobuf field: string next_after = 4
+     */
+    nextAfter: string;
+}
+/**
  * @generated from protobuf message notifier.client.v1.ClusterNode
  */
 export interface ClusterNode {
@@ -1165,6 +1357,39 @@ export interface Attachment {
      * @generated from protobuf field: string deleted_at = 6
      */
     deletedAt: string;
+    /**
+     * @generated from protobuf field: int64 origin_node_id = 7
+     */
+    originNodeId: string;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.UserMetadata
+ */
+export interface UserMetadata {
+    /**
+     * @generated from protobuf field: notifier.client.v1.UserRef owner = 1
+     */
+    owner?: UserRef;
+    /**
+     * @generated from protobuf field: string key = 2
+     */
+    key: string;
+    /**
+     * @generated from protobuf field: bytes value = 3
+     */
+    value: Uint8Array;
+    /**
+     * @generated from protobuf field: string updated_at = 4
+     */
+    updatedAt: string;
+    /**
+     * @generated from protobuf field: string deleted_at = 5
+     */
+    deletedAt: string;
+    /**
+     * @generated from protobuf field: string expires_at = 6
+     */
+    expiresAt: string;
     /**
      * @generated from protobuf field: int64 origin_node_id = 7
      */
@@ -1514,7 +1739,11 @@ class ClientEnvelope$Type extends MessageType<ClientEnvelope> {
             { no: 15, name: "metrics", kind: "message", oneof: "body", T: () => MetricsRequest },
             { no: 16, name: "list_cluster_nodes", kind: "message", oneof: "body", T: () => ListClusterNodesRequest },
             { no: 17, name: "list_node_logged_in_users", kind: "message", oneof: "body", T: () => ListNodeLoggedInUsersRequest },
-            { no: 18, name: "resolve_user_sessions", kind: "message", oneof: "body", T: () => ResolveUserSessionsRequest }
+            { no: 18, name: "resolve_user_sessions", kind: "message", oneof: "body", T: () => ResolveUserSessionsRequest },
+            { no: 19, name: "get_user_metadata", kind: "message", oneof: "body", T: () => GetUserMetadataRequest },
+            { no: 20, name: "upsert_user_metadata", kind: "message", oneof: "body", T: () => UpsertUserMetadataRequest },
+            { no: 21, name: "delete_user_metadata", kind: "message", oneof: "body", T: () => DeleteUserMetadataRequest },
+            { no: 22, name: "scan_user_metadata", kind: "message", oneof: "body", T: () => ScanUserMetadataRequest }
         ]);
     }
     override create(value?: PartialMessage<ClientEnvelope>): ClientEnvelope {
@@ -1637,6 +1866,30 @@ class ClientEnvelope$Type extends MessageType<ClientEnvelope> {
                         resolveUserSessions: ResolveUserSessionsRequest.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).resolveUserSessions)
                     };
                     break;
+                case /* notifier.client.v1.GetUserMetadataRequest get_user_metadata */ 19:
+                    message.body = {
+                        oneofKind: "getUserMetadata",
+                        getUserMetadata: GetUserMetadataRequest.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).getUserMetadata)
+                    };
+                    break;
+                case /* notifier.client.v1.UpsertUserMetadataRequest upsert_user_metadata */ 20:
+                    message.body = {
+                        oneofKind: "upsertUserMetadata",
+                        upsertUserMetadata: UpsertUserMetadataRequest.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).upsertUserMetadata)
+                    };
+                    break;
+                case /* notifier.client.v1.DeleteUserMetadataRequest delete_user_metadata */ 21:
+                    message.body = {
+                        oneofKind: "deleteUserMetadata",
+                        deleteUserMetadata: DeleteUserMetadataRequest.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).deleteUserMetadata)
+                    };
+                    break;
+                case /* notifier.client.v1.ScanUserMetadataRequest scan_user_metadata */ 22:
+                    message.body = {
+                        oneofKind: "scanUserMetadata",
+                        scanUserMetadata: ScanUserMetadataRequest.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).scanUserMetadata)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1703,6 +1956,18 @@ class ClientEnvelope$Type extends MessageType<ClientEnvelope> {
         /* notifier.client.v1.ResolveUserSessionsRequest resolve_user_sessions = 18; */
         if (message.body.oneofKind === "resolveUserSessions")
             ResolveUserSessionsRequest.internalBinaryWrite(message.body.resolveUserSessions, writer.tag(18, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.GetUserMetadataRequest get_user_metadata = 19; */
+        if (message.body.oneofKind === "getUserMetadata")
+            GetUserMetadataRequest.internalBinaryWrite(message.body.getUserMetadata, writer.tag(19, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.UpsertUserMetadataRequest upsert_user_metadata = 20; */
+        if (message.body.oneofKind === "upsertUserMetadata")
+            UpsertUserMetadataRequest.internalBinaryWrite(message.body.upsertUserMetadata, writer.tag(20, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.DeleteUserMetadataRequest delete_user_metadata = 21; */
+        if (message.body.oneofKind === "deleteUserMetadata")
+            DeleteUserMetadataRequest.internalBinaryWrite(message.body.deleteUserMetadata, writer.tag(21, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.ScanUserMetadataRequest scan_user_metadata = 22; */
+        if (message.body.oneofKind === "scanUserMetadata")
+            ScanUserMetadataRequest.internalBinaryWrite(message.body.scanUserMetadata, writer.tag(22, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1736,7 +2001,11 @@ class ServerEnvelope$Type extends MessageType<ServerEnvelope> {
             { no: 17, name: "metrics_response", kind: "message", oneof: "body", T: () => MetricsResponse },
             { no: 18, name: "list_cluster_nodes_response", kind: "message", oneof: "body", T: () => ListClusterNodesResponse },
             { no: 19, name: "list_node_logged_in_users_response", kind: "message", oneof: "body", T: () => ListNodeLoggedInUsersResponse },
-            { no: 20, name: "resolve_user_sessions_response", kind: "message", oneof: "body", T: () => ResolveUserSessionsResponse }
+            { no: 20, name: "resolve_user_sessions_response", kind: "message", oneof: "body", T: () => ResolveUserSessionsResponse },
+            { no: 21, name: "get_user_metadata_response", kind: "message", oneof: "body", T: () => GetUserMetadataResponse },
+            { no: 22, name: "upsert_user_metadata_response", kind: "message", oneof: "body", T: () => UpsertUserMetadataResponse },
+            { no: 23, name: "delete_user_metadata_response", kind: "message", oneof: "body", T: () => DeleteUserMetadataResponse },
+            { no: 24, name: "scan_user_metadata_response", kind: "message", oneof: "body", T: () => ScanUserMetadataResponse }
         ]);
     }
     override create(value?: PartialMessage<ServerEnvelope>): ServerEnvelope {
@@ -1871,6 +2140,30 @@ class ServerEnvelope$Type extends MessageType<ServerEnvelope> {
                         resolveUserSessionsResponse: ResolveUserSessionsResponse.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).resolveUserSessionsResponse)
                     };
                     break;
+                case /* notifier.client.v1.GetUserMetadataResponse get_user_metadata_response */ 21:
+                    message.body = {
+                        oneofKind: "getUserMetadataResponse",
+                        getUserMetadataResponse: GetUserMetadataResponse.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).getUserMetadataResponse)
+                    };
+                    break;
+                case /* notifier.client.v1.UpsertUserMetadataResponse upsert_user_metadata_response */ 22:
+                    message.body = {
+                        oneofKind: "upsertUserMetadataResponse",
+                        upsertUserMetadataResponse: UpsertUserMetadataResponse.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).upsertUserMetadataResponse)
+                    };
+                    break;
+                case /* notifier.client.v1.DeleteUserMetadataResponse delete_user_metadata_response */ 23:
+                    message.body = {
+                        oneofKind: "deleteUserMetadataResponse",
+                        deleteUserMetadataResponse: DeleteUserMetadataResponse.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).deleteUserMetadataResponse)
+                    };
+                    break;
+                case /* notifier.client.v1.ScanUserMetadataResponse scan_user_metadata_response */ 24:
+                    message.body = {
+                        oneofKind: "scanUserMetadataResponse",
+                        scanUserMetadataResponse: ScanUserMetadataResponse.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).scanUserMetadataResponse)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1943,6 +2236,18 @@ class ServerEnvelope$Type extends MessageType<ServerEnvelope> {
         /* notifier.client.v1.ResolveUserSessionsResponse resolve_user_sessions_response = 20; */
         if (message.body.oneofKind === "resolveUserSessionsResponse")
             ResolveUserSessionsResponse.internalBinaryWrite(message.body.resolveUserSessionsResponse, writer.tag(20, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.GetUserMetadataResponse get_user_metadata_response = 21; */
+        if (message.body.oneofKind === "getUserMetadataResponse")
+            GetUserMetadataResponse.internalBinaryWrite(message.body.getUserMetadataResponse, writer.tag(21, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.UpsertUserMetadataResponse upsert_user_metadata_response = 22; */
+        if (message.body.oneofKind === "upsertUserMetadataResponse")
+            UpsertUserMetadataResponse.internalBinaryWrite(message.body.upsertUserMetadataResponse, writer.tag(22, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.DeleteUserMetadataResponse delete_user_metadata_response = 23; */
+        if (message.body.oneofKind === "deleteUserMetadataResponse")
+            DeleteUserMetadataResponse.internalBinaryWrite(message.body.deleteUserMetadataResponse, writer.tag(23, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.ScanUserMetadataResponse scan_user_metadata_response = 24; */
+        if (message.body.oneofKind === "scanUserMetadataResponse")
+            ScanUserMetadataResponse.internalBinaryWrite(message.body.scanUserMetadataResponse, writer.tag(24, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -4320,6 +4625,518 @@ class ResolveUserSessionsResponse$Type extends MessageType<ResolveUserSessionsRe
  */
 export const ResolveUserSessionsResponse = new ResolveUserSessionsResponse$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class GetUserMetadataRequest$Type extends MessageType<GetUserMetadataRequest> {
+    constructor() {
+        super("notifier.client.v1.GetUserMetadataRequest", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "owner", kind: "message", T: () => UserRef },
+            { no: 3, name: "key", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    override create(value?: PartialMessage<GetUserMetadataRequest>): GetUserMetadataRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        message.key = "";
+        if (value !== undefined)
+            reflectionMergePartial<GetUserMetadataRequest>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: GetUserMetadataRequest): GetUserMetadataRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* notifier.client.v1.UserRef owner */ 2:
+                    message.owner = UserRef.internalBinaryRead(reader, reader.uint32(), options, message.owner);
+                    break;
+                case /* string key */ 3:
+                    message.key = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: GetUserMetadataRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* notifier.client.v1.UserRef owner = 2; */
+        if (message.owner)
+            UserRef.internalBinaryWrite(message.owner, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* string key = 3; */
+        if (message.key !== "")
+            writer.tag(3, WireType.LengthDelimited).string(message.key);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.GetUserMetadataRequest
+ */
+export const GetUserMetadataRequest = new GetUserMetadataRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class UpsertUserMetadataRequest$Type extends MessageType<UpsertUserMetadataRequest> {
+    constructor() {
+        super("notifier.client.v1.UpsertUserMetadataRequest", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "owner", kind: "message", T: () => UserRef },
+            { no: 3, name: "key", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 4, name: "value", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 5, name: "expires_at", kind: "message", T: () => StringField }
+        ]);
+    }
+    override create(value?: PartialMessage<UpsertUserMetadataRequest>): UpsertUserMetadataRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        message.key = "";
+        message.value = new Uint8Array(0);
+        if (value !== undefined)
+            reflectionMergePartial<UpsertUserMetadataRequest>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: UpsertUserMetadataRequest): UpsertUserMetadataRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* notifier.client.v1.UserRef owner */ 2:
+                    message.owner = UserRef.internalBinaryRead(reader, reader.uint32(), options, message.owner);
+                    break;
+                case /* string key */ 3:
+                    message.key = reader.string();
+                    break;
+                case /* bytes value */ 4:
+                    message.value = reader.bytes();
+                    break;
+                case /* notifier.client.v1.StringField expires_at */ 5:
+                    message.expiresAt = StringField.internalBinaryRead(reader, reader.uint32(), options, message.expiresAt);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: UpsertUserMetadataRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* notifier.client.v1.UserRef owner = 2; */
+        if (message.owner)
+            UserRef.internalBinaryWrite(message.owner, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* string key = 3; */
+        if (message.key !== "")
+            writer.tag(3, WireType.LengthDelimited).string(message.key);
+        /* bytes value = 4; */
+        if (message.value.length)
+            writer.tag(4, WireType.LengthDelimited).bytes(message.value);
+        /* notifier.client.v1.StringField expires_at = 5; */
+        if (message.expiresAt)
+            StringField.internalBinaryWrite(message.expiresAt, writer.tag(5, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.UpsertUserMetadataRequest
+ */
+export const UpsertUserMetadataRequest = new UpsertUserMetadataRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class DeleteUserMetadataRequest$Type extends MessageType<DeleteUserMetadataRequest> {
+    constructor() {
+        super("notifier.client.v1.DeleteUserMetadataRequest", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "owner", kind: "message", T: () => UserRef },
+            { no: 3, name: "key", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    override create(value?: PartialMessage<DeleteUserMetadataRequest>): DeleteUserMetadataRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        message.key = "";
+        if (value !== undefined)
+            reflectionMergePartial<DeleteUserMetadataRequest>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DeleteUserMetadataRequest): DeleteUserMetadataRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* notifier.client.v1.UserRef owner */ 2:
+                    message.owner = UserRef.internalBinaryRead(reader, reader.uint32(), options, message.owner);
+                    break;
+                case /* string key */ 3:
+                    message.key = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: DeleteUserMetadataRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* notifier.client.v1.UserRef owner = 2; */
+        if (message.owner)
+            UserRef.internalBinaryWrite(message.owner, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* string key = 3; */
+        if (message.key !== "")
+            writer.tag(3, WireType.LengthDelimited).string(message.key);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.DeleteUserMetadataRequest
+ */
+export const DeleteUserMetadataRequest = new DeleteUserMetadataRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ScanUserMetadataRequest$Type extends MessageType<ScanUserMetadataRequest> {
+    constructor() {
+        super("notifier.client.v1.ScanUserMetadataRequest", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "owner", kind: "message", T: () => UserRef },
+            { no: 3, name: "prefix", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 4, name: "after", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 5, name: "limit", kind: "scalar", T: 5 /*ScalarType.INT32*/ }
+        ]);
+    }
+    override create(value?: PartialMessage<ScanUserMetadataRequest>): ScanUserMetadataRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        message.prefix = "";
+        message.after = "";
+        message.limit = 0;
+        if (value !== undefined)
+            reflectionMergePartial<ScanUserMetadataRequest>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ScanUserMetadataRequest): ScanUserMetadataRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* notifier.client.v1.UserRef owner */ 2:
+                    message.owner = UserRef.internalBinaryRead(reader, reader.uint32(), options, message.owner);
+                    break;
+                case /* string prefix */ 3:
+                    message.prefix = reader.string();
+                    break;
+                case /* string after */ 4:
+                    message.after = reader.string();
+                    break;
+                case /* int32 limit */ 5:
+                    message.limit = reader.int32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: ScanUserMetadataRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* notifier.client.v1.UserRef owner = 2; */
+        if (message.owner)
+            UserRef.internalBinaryWrite(message.owner, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* string prefix = 3; */
+        if (message.prefix !== "")
+            writer.tag(3, WireType.LengthDelimited).string(message.prefix);
+        /* string after = 4; */
+        if (message.after !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.after);
+        /* int32 limit = 5; */
+        if (message.limit !== 0)
+            writer.tag(5, WireType.Varint).int32(message.limit);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.ScanUserMetadataRequest
+ */
+export const ScanUserMetadataRequest = new ScanUserMetadataRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class GetUserMetadataResponse$Type extends MessageType<GetUserMetadataResponse> {
+    constructor() {
+        super("notifier.client.v1.GetUserMetadataResponse", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "metadata", kind: "message", T: () => UserMetadata }
+        ]);
+    }
+    override create(value?: PartialMessage<GetUserMetadataResponse>): GetUserMetadataResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        if (value !== undefined)
+            reflectionMergePartial<GetUserMetadataResponse>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: GetUserMetadataResponse): GetUserMetadataResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* notifier.client.v1.UserMetadata metadata */ 2:
+                    message.metadata = UserMetadata.internalBinaryRead(reader, reader.uint32(), options, message.metadata);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: GetUserMetadataResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* notifier.client.v1.UserMetadata metadata = 2; */
+        if (message.metadata)
+            UserMetadata.internalBinaryWrite(message.metadata, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.GetUserMetadataResponse
+ */
+export const GetUserMetadataResponse = new GetUserMetadataResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class UpsertUserMetadataResponse$Type extends MessageType<UpsertUserMetadataResponse> {
+    constructor() {
+        super("notifier.client.v1.UpsertUserMetadataResponse", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "metadata", kind: "message", T: () => UserMetadata }
+        ]);
+    }
+    override create(value?: PartialMessage<UpsertUserMetadataResponse>): UpsertUserMetadataResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        if (value !== undefined)
+            reflectionMergePartial<UpsertUserMetadataResponse>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: UpsertUserMetadataResponse): UpsertUserMetadataResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* notifier.client.v1.UserMetadata metadata */ 2:
+                    message.metadata = UserMetadata.internalBinaryRead(reader, reader.uint32(), options, message.metadata);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: UpsertUserMetadataResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* notifier.client.v1.UserMetadata metadata = 2; */
+        if (message.metadata)
+            UserMetadata.internalBinaryWrite(message.metadata, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.UpsertUserMetadataResponse
+ */
+export const UpsertUserMetadataResponse = new UpsertUserMetadataResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class DeleteUserMetadataResponse$Type extends MessageType<DeleteUserMetadataResponse> {
+    constructor() {
+        super("notifier.client.v1.DeleteUserMetadataResponse", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "metadata", kind: "message", T: () => UserMetadata }
+        ]);
+    }
+    override create(value?: PartialMessage<DeleteUserMetadataResponse>): DeleteUserMetadataResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        if (value !== undefined)
+            reflectionMergePartial<DeleteUserMetadataResponse>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DeleteUserMetadataResponse): DeleteUserMetadataResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* notifier.client.v1.UserMetadata metadata */ 2:
+                    message.metadata = UserMetadata.internalBinaryRead(reader, reader.uint32(), options, message.metadata);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: DeleteUserMetadataResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* notifier.client.v1.UserMetadata metadata = 2; */
+        if (message.metadata)
+            UserMetadata.internalBinaryWrite(message.metadata, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.DeleteUserMetadataResponse
+ */
+export const DeleteUserMetadataResponse = new DeleteUserMetadataResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ScanUserMetadataResponse$Type extends MessageType<ScanUserMetadataResponse> {
+    constructor() {
+        super("notifier.client.v1.ScanUserMetadataResponse", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "items", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => UserMetadata },
+            { no: 3, name: "count", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
+            { no: 4, name: "next_after", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    override create(value?: PartialMessage<ScanUserMetadataResponse>): ScanUserMetadataResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        message.items = [];
+        message.count = 0;
+        message.nextAfter = "";
+        if (value !== undefined)
+            reflectionMergePartial<ScanUserMetadataResponse>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ScanUserMetadataResponse): ScanUserMetadataResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* repeated notifier.client.v1.UserMetadata items */ 2:
+                    message.items.push(UserMetadata.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* int32 count */ 3:
+                    message.count = reader.int32();
+                    break;
+                case /* string next_after */ 4:
+                    message.nextAfter = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: ScanUserMetadataResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* repeated notifier.client.v1.UserMetadata items = 2; */
+        for (let i = 0; i < message.items.length; i++)
+            UserMetadata.internalBinaryWrite(message.items[i]!, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* int32 count = 3; */
+        if (message.count !== 0)
+            writer.tag(3, WireType.Varint).int32(message.count);
+        /* string next_after = 4; */
+        if (message.nextAfter !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.nextAfter);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.ScanUserMetadataResponse
+ */
+export const ScanUserMetadataResponse = new ScanUserMetadataResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ClusterNode$Type extends MessageType<ClusterNode> {
     constructor() {
         super("notifier.client.v1.ClusterNode", [
@@ -5226,6 +6043,100 @@ class Attachment$Type extends MessageType<Attachment> {
  * @generated MessageType for protobuf message notifier.client.v1.Attachment
  */
 export const Attachment = new Attachment$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class UserMetadata$Type extends MessageType<UserMetadata> {
+    constructor() {
+        super("notifier.client.v1.UserMetadata", [
+            { no: 1, name: "owner", kind: "message", T: () => UserRef },
+            { no: 2, name: "key", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 3, name: "value", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 4, name: "updated_at", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 5, name: "deleted_at", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 6, name: "expires_at", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 7, name: "origin_node_id", kind: "scalar", T: 3 /*ScalarType.INT64*/ }
+        ]);
+    }
+    override create(value?: PartialMessage<UserMetadata>): UserMetadata {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.key = "";
+        message.value = new Uint8Array(0);
+        message.updatedAt = "";
+        message.deletedAt = "";
+        message.expiresAt = "";
+        message.originNodeId = "0";
+        if (value !== undefined)
+            reflectionMergePartial<UserMetadata>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: UserMetadata): UserMetadata {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* notifier.client.v1.UserRef owner */ 1:
+                    message.owner = UserRef.internalBinaryRead(reader, reader.uint32(), options, message.owner);
+                    break;
+                case /* string key */ 2:
+                    message.key = reader.string();
+                    break;
+                case /* bytes value */ 3:
+                    message.value = reader.bytes();
+                    break;
+                case /* string updated_at */ 4:
+                    message.updatedAt = reader.string();
+                    break;
+                case /* string deleted_at */ 5:
+                    message.deletedAt = reader.string();
+                    break;
+                case /* string expires_at */ 6:
+                    message.expiresAt = reader.string();
+                    break;
+                case /* int64 origin_node_id */ 7:
+                    message.originNodeId = reader.int64().toString();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: UserMetadata, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* notifier.client.v1.UserRef owner = 1; */
+        if (message.owner)
+            UserRef.internalBinaryWrite(message.owner, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* string key = 2; */
+        if (message.key !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.key);
+        /* bytes value = 3; */
+        if (message.value.length)
+            writer.tag(3, WireType.LengthDelimited).bytes(message.value);
+        /* string updated_at = 4; */
+        if (message.updatedAt !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.updatedAt);
+        /* string deleted_at = 5; */
+        if (message.deletedAt !== "")
+            writer.tag(5, WireType.LengthDelimited).string(message.deletedAt);
+        /* string expires_at = 6; */
+        if (message.expiresAt !== "")
+            writer.tag(6, WireType.LengthDelimited).string(message.expiresAt);
+        /* int64 origin_node_id = 7; */
+        if (message.originNodeId !== "0")
+            writer.tag(7, WireType.Varint).int64(message.originNodeId);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.UserMetadata
+ */
+export const UserMetadata = new UserMetadata$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class Event$Type extends MessageType<Event> {
     constructor() {
