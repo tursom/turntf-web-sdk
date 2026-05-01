@@ -1,4 +1,5 @@
 import {
+  type Credentials,
   DeliveryMode,
   type Message,
   type MessageCursor,
@@ -27,6 +28,31 @@ export function assertRequiredDecimalString(value: string, field: string): void 
 export function validateUserRef(ref: UserRef, field = "user"): void {
   assertRequiredDecimalString(ref.nodeId, `${field}.nodeId`);
   assertRequiredDecimalString(ref.userId, `${field}.userId`);
+}
+
+export function validateLoginName(value: string, field = "loginName"): void {
+  if (value === "") {
+    throw new Error(`${field} is required`);
+  }
+}
+
+export function validateCredentials(credentials: Credentials, field = "credentials"): void {
+  const hasLoginName = "loginName" in credentials;
+  const hasNodeId = "nodeId" in credentials;
+  const hasUserId = "userId" in credentials;
+
+  if (hasLoginName) {
+    if (hasNodeId || hasUserId) {
+      throw new Error(`${field} must use either loginName or nodeId/userId`);
+    }
+    validateLoginName(credentials.loginName, `${field}.loginName`);
+    return;
+  }
+
+  if (!hasNodeId || !hasUserId) {
+    throw new Error(`${field} must provide nodeId/userId or loginName`);
+  }
+  validateUserRef(credentials, field);
 }
 
 export function validateSessionRef(ref: SessionRef, field = "session"): void {

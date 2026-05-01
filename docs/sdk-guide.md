@@ -28,16 +28,23 @@ const client = new HTTPClient("http://localhost:8080");
 ```typescript
 import { plainPasswordSync } from "@tursom/turntf-web-sdk";
 
-// 使用明文密码登录（SDK 会自动做 bcrypt 哈希）
+// 使用 nodeId + userId 登录（SDK 会自动做 bcrypt 哈希）
 const token = await client.loginWithPassword(
   "4096",        // nodeId
   "1",           // userId
   plainPasswordSync("root-password")
 );
 
+// 或者改用 loginName + password 登录
+const tokenByLoginName = await client.loginByLoginNameWithPassword(
+  "root",
+  plainPasswordSync("root-password")
+);
+
 // 创建新用户
 const newUser = await client.createUser(token, {
   username: "alice",
+  loginName: "alice-login",
   password: plainPasswordSync("alice-password"),
   profileJson: new TextEncoder().encode(JSON.stringify({ displayName: "Alice" })),
   role: "user"
@@ -51,7 +58,8 @@ const user = await client.getUser(token, {
 
 // 更新用户
 await client.updateUser(token, { nodeId: "4096", userId: "1025" }, {
-  username: "alice_new"
+  username: "alice_new",
+  loginName: ""   // 传空串表示解绑登录名；不传表示保持不变
 });
 ```
 
@@ -216,8 +224,7 @@ class MyHandler extends NopHandler {
 const client = new Client({
   baseUrl: "http://localhost:8080",
   credentials: {
-    nodeId: "4096",
-    userId: "1025",
+    loginName: "alice-login",
     password: plainPasswordSync("alice-password")
   },
   cursorStore: new MemoryCursorStore(),  // 生产环境建议实现 IndexedDB 持久化
@@ -281,6 +288,7 @@ if (session) {
 // 创建用户（通过 WebSocket RPC）
 const user = await client.createUser({
   username: "bob",
+  loginName: "bob-login",
   password: plainPasswordSync("bob-password"),
   role: "user"
 });

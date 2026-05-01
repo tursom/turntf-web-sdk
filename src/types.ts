@@ -8,11 +8,18 @@ export const DeliveryMode = {
 
 export type DeliveryMode = (typeof DeliveryMode)[keyof typeof DeliveryMode];
 
-export interface Credentials {
+export interface UserCredentials {
   nodeId: string;
   userId: string;
   password: PasswordInput;
 }
+
+export interface LoginNameCredentials {
+  loginName: string;
+  password: PasswordInput;
+}
+
+export type Credentials = UserCredentials | LoginNameCredentials;
 
 export interface UserRef {
   nodeId: string;
@@ -33,6 +40,7 @@ export interface User {
   nodeId: string;
   userId: string;
   username: string;
+  loginName: string;
   role: string;
   profileJson: Uint8Array;
   systemReserved: boolean;
@@ -138,6 +146,7 @@ export interface LoggedInUser {
   nodeId: string;
   userId: string;
   username: string;
+  loginName: string;
 }
 
 export interface OnlineNodePresence {
@@ -242,6 +251,7 @@ export interface CreateUserRequest {
   password?: PasswordInput;
   profileJson?: Uint8Array;
   role: string;
+  loginName?: string;
 }
 
 export interface UpdateUserRequest {
@@ -249,6 +259,7 @@ export interface UpdateUserRequest {
   password?: PasswordInput;
   profileJson?: Uint8Array;
   role?: string;
+  loginName?: string;
 }
 
 export interface UpsertUserMetadataRequest {

@@ -7,6 +7,8 @@
 
 本包面向浏览器运行时设计，不依赖 Node 运行时能力；公开 API、类型命名和协议语义尽量向 `turntf-js` 对齐。
 
+认证支持两条路径：旧的 `nodeId + userId + password` 仍然可用；也可以改用新的 `loginName + password`。`username` 仅作为展示字段，不参与认证。
+
 ## 版本说明
 
 `0.2.0` 是一次 breaking upgrade：
@@ -22,7 +24,7 @@
 
 `HTTPClient` 覆盖：
 
-- 登录：`login()`、`loginWithPassword()`
+- 登录：`login()`、`loginWithPassword()`、`loginByLoginName()`、`loginByLoginNameWithPassword()`
 - 用户：`createUser()`、`createChannel()`、`getUser()`、`updateUser()`、`deleteUser()`
 - 关系：`createSubscription()`、`subscribeChannel()`、`unsubscribeChannel()`、`listSubscriptions()`
 - 黑名单：`blockUser()`、`unblockUser()`、`listBlockedUsers()`
@@ -66,8 +68,15 @@ const token = await client.loginWithPassword(
   plainPasswordSync("root-password")
 );
 
+// 或者使用 loginName 登录
+const tokenByLoginName = await client.loginByLoginNameWithPassword(
+  "root",
+  plainPasswordSync("root-password")
+);
+
 const user = await client.createUser(token, {
   username: "alice",
+  loginName: "alice-login",
   password: plainPasswordSync("alice-password"),
   profileJson: new TextEncoder().encode("{\"display_name\":\"Alice\"}"),
   role: "user"
@@ -109,8 +118,7 @@ class Handler extends NopHandler {
 const client = new Client({
   baseUrl: "http://127.0.0.1:8080",
   credentials: {
-    nodeId: "4096",
-    userId: "1025",
+    loginName: "alice-login",
     password: plainPasswordSync("alice-password")
   },
   cursorStore: new MemoryCursorStore(),
@@ -146,7 +154,9 @@ await client.close();
 
 - 所有 64 位 ID 都以十进制字符串暴露，例如 `nodeId`、`userId`、`seq`、`packetId`
 - 二进制字段统一为 `Uint8Array`
+- `User`、`LoggedInUser` 都会返回 `loginName`
 - `User.profileJson`、`Attachment.configJson`、`Event.eventJson` 都是原始 JSON 字节
+- `updateUser({ loginName: "" })` 表示解绑登录名；缺席表示保持不变
 - `Client` 收到持久化消息时，固定按 `saveMessage -> saveCursor -> AckMessage -> handler.onMessage` 顺序处理
 - `AckMessage` 只影响当前连接内去重；真正的重连恢复依赖 `seenMessages`
 

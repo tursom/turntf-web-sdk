@@ -317,6 +317,10 @@ export interface LoginRequest {
      */
     user?: UserRef;
     /**
+     * @generated from protobuf field: string login_name = 2
+     */
+    loginName: string;
+    /**
      * @generated from protobuf field: string password = 3
      */
     password: string;
@@ -521,6 +525,10 @@ export interface CreateUserRequest {
      * @generated from protobuf field: string role = 5
      */
     role: string;
+    /**
+     * @generated from protobuf field: string login_name = 6
+     */
+    loginName: string;
 }
 /**
  * @generated from protobuf message notifier.client.v1.GetUserRequest
@@ -563,6 +571,10 @@ export interface UpdateUserRequest {
      * @generated from protobuf field: notifier.client.v1.StringField role = 6
      */
     role?: StringField;
+    /**
+     * @generated from protobuf field: notifier.client.v1.StringField login_name = 7
+     */
+    loginName?: StringField;
 }
 /**
  * @generated from protobuf message notifier.client.v1.DeleteUserRequest
@@ -1130,6 +1142,10 @@ export interface LoggedInUser {
      * @generated from protobuf field: string username = 3
      */
     username: string;
+    /**
+     * @generated from protobuf field: string login_name = 4
+     */
+    loginName: string;
 }
 /**
  * @generated from protobuf message notifier.client.v1.SessionRef
@@ -1262,6 +1278,10 @@ export interface User {
      * @generated from protobuf field: int64 origin_node_id = 9
      */
     originNodeId: string;
+    /**
+     * @generated from protobuf field: string login_name = 10
+     */
+    loginName: string;
 }
 /**
  * @generated from protobuf message notifier.client.v1.Message
@@ -2263,6 +2283,7 @@ class LoginRequest$Type extends MessageType<LoginRequest> {
     constructor() {
         super("notifier.client.v1.LoginRequest", [
             { no: 1, name: "user", kind: "message", T: () => UserRef },
+            { no: 2, name: "login_name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 3, name: "password", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 4, name: "seen_messages", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => MessageCursor },
             { no: 5, name: "transient_only", kind: "scalar", T: 8 /*ScalarType.BOOL*/ }
@@ -2270,6 +2291,7 @@ class LoginRequest$Type extends MessageType<LoginRequest> {
     }
     override create(value?: PartialMessage<LoginRequest>): LoginRequest {
         const message = globalThis.Object.create((this.messagePrototype!));
+        message.loginName = "";
         message.password = "";
         message.seenMessages = [];
         message.transientOnly = false;
@@ -2284,6 +2306,9 @@ class LoginRequest$Type extends MessageType<LoginRequest> {
             switch (fieldNo) {
                 case /* notifier.client.v1.UserRef user */ 1:
                     message.user = UserRef.internalBinaryRead(reader, reader.uint32(), options, message.user);
+                    break;
+                case /* string login_name */ 2:
+                    message.loginName = reader.string();
                     break;
                 case /* string password */ 3:
                     message.password = reader.string();
@@ -2309,6 +2334,9 @@ class LoginRequest$Type extends MessageType<LoginRequest> {
         /* notifier.client.v1.UserRef user = 1; */
         if (message.user)
             UserRef.internalBinaryWrite(message.user, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* string login_name = 2; */
+        if (message.loginName !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.loginName);
         /* string password = 3; */
         if (message.password !== "")
             writer.tag(3, WireType.LengthDelimited).string(message.password);
@@ -2938,7 +2966,8 @@ class CreateUserRequest$Type extends MessageType<CreateUserRequest> {
             { no: 2, name: "username", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 3, name: "password", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 4, name: "profile_json", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
-            { no: 5, name: "role", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 5, name: "role", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 6, name: "login_name", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     override create(value?: PartialMessage<CreateUserRequest>): CreateUserRequest {
@@ -2948,6 +2977,7 @@ class CreateUserRequest$Type extends MessageType<CreateUserRequest> {
         message.password = "";
         message.profileJson = new Uint8Array(0);
         message.role = "";
+        message.loginName = "";
         if (value !== undefined)
             reflectionMergePartial<CreateUserRequest>(this, message, value);
         return message;
@@ -2971,6 +3001,9 @@ class CreateUserRequest$Type extends MessageType<CreateUserRequest> {
                     break;
                 case /* string role */ 5:
                     message.role = reader.string();
+                    break;
+                case /* string login_name */ 6:
+                    message.loginName = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -2999,6 +3032,9 @@ class CreateUserRequest$Type extends MessageType<CreateUserRequest> {
         /* string role = 5; */
         if (message.role !== "")
             writer.tag(5, WireType.LengthDelimited).string(message.role);
+        /* string login_name = 6; */
+        if (message.loginName !== "")
+            writer.tag(6, WireType.LengthDelimited).string(message.loginName);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -3072,7 +3108,8 @@ class UpdateUserRequest$Type extends MessageType<UpdateUserRequest> {
             { no: 3, name: "username", kind: "message", T: () => StringField },
             { no: 4, name: "password", kind: "message", T: () => StringField },
             { no: 5, name: "profile_json", kind: "message", T: () => BytesField },
-            { no: 6, name: "role", kind: "message", T: () => StringField }
+            { no: 6, name: "role", kind: "message", T: () => StringField },
+            { no: 7, name: "login_name", kind: "message", T: () => StringField }
         ]);
     }
     override create(value?: PartialMessage<UpdateUserRequest>): UpdateUserRequest {
@@ -3105,6 +3142,9 @@ class UpdateUserRequest$Type extends MessageType<UpdateUserRequest> {
                 case /* notifier.client.v1.StringField role */ 6:
                     message.role = StringField.internalBinaryRead(reader, reader.uint32(), options, message.role);
                     break;
+                case /* notifier.client.v1.StringField login_name */ 7:
+                    message.loginName = StringField.internalBinaryRead(reader, reader.uint32(), options, message.loginName);
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -3135,6 +3175,9 @@ class UpdateUserRequest$Type extends MessageType<UpdateUserRequest> {
         /* notifier.client.v1.StringField role = 6; */
         if (message.role)
             StringField.internalBinaryWrite(message.role, writer.tag(6, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.StringField login_name = 7; */
+        if (message.loginName)
+            StringField.internalBinaryWrite(message.loginName, writer.tag(7, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -5213,7 +5256,8 @@ class LoggedInUser$Type extends MessageType<LoggedInUser> {
         super("notifier.client.v1.LoggedInUser", [
             { no: 1, name: "node_id", kind: "scalar", T: 3 /*ScalarType.INT64*/ },
             { no: 2, name: "user_id", kind: "scalar", T: 3 /*ScalarType.INT64*/ },
-            { no: 3, name: "username", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 3, name: "username", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 4, name: "login_name", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     override create(value?: PartialMessage<LoggedInUser>): LoggedInUser {
@@ -5221,6 +5265,7 @@ class LoggedInUser$Type extends MessageType<LoggedInUser> {
         message.nodeId = "0";
         message.userId = "0";
         message.username = "";
+        message.loginName = "";
         if (value !== undefined)
             reflectionMergePartial<LoggedInUser>(this, message, value);
         return message;
@@ -5238,6 +5283,9 @@ class LoggedInUser$Type extends MessageType<LoggedInUser> {
                     break;
                 case /* string username */ 3:
                     message.username = reader.string();
+                    break;
+                case /* string login_name */ 4:
+                    message.loginName = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -5260,6 +5308,9 @@ class LoggedInUser$Type extends MessageType<LoggedInUser> {
         /* string username = 3; */
         if (message.username !== "")
             writer.tag(3, WireType.LengthDelimited).string(message.username);
+        /* string login_name = 4; */
+        if (message.loginName !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.loginName);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -5666,7 +5717,8 @@ class User$Type extends MessageType<User> {
             { no: 6, name: "system_reserved", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 7, name: "created_at", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 8, name: "updated_at", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 9, name: "origin_node_id", kind: "scalar", T: 3 /*ScalarType.INT64*/ }
+            { no: 9, name: "origin_node_id", kind: "scalar", T: 3 /*ScalarType.INT64*/ },
+            { no: 10, name: "login_name", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     override create(value?: PartialMessage<User>): User {
@@ -5680,6 +5732,7 @@ class User$Type extends MessageType<User> {
         message.createdAt = "";
         message.updatedAt = "";
         message.originNodeId = "0";
+        message.loginName = "";
         if (value !== undefined)
             reflectionMergePartial<User>(this, message, value);
         return message;
@@ -5715,6 +5768,9 @@ class User$Type extends MessageType<User> {
                     break;
                 case /* int64 origin_node_id */ 9:
                     message.originNodeId = reader.int64().toString();
+                    break;
+                case /* string login_name */ 10:
+                    message.loginName = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -5755,6 +5811,9 @@ class User$Type extends MessageType<User> {
         /* int64 origin_node_id = 9; */
         if (message.originNodeId !== "0")
             writer.tag(9, WireType.Varint).int64(message.originNodeId);
+        /* string login_name = 10; */
+        if (message.loginName !== "")
+            writer.tag(10, WireType.LengthDelimited).string(message.loginName);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);

@@ -96,6 +96,7 @@ export function userFromProto(user: ProtoUser | undefined): User {
     nodeId: user.nodeId,
     userId: user.userId,
     username: user.username,
+    loginName: user.loginName,
     role: user.role,
     profileJson: cloneBytes(user.profileJson),
     systemReserved: user.systemReserved,
@@ -288,7 +289,8 @@ export function loggedInUserFromProto(user: ProtoLoggedInUser | undefined): Logg
   return {
     nodeId: user.nodeId,
     userId: user.userId,
-    username: user.username
+    username: user.username,
+    loginName: user.loginName
   };
 }
 

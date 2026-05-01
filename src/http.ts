@@ -40,6 +40,7 @@ import {
   toRequiredWireInteger,
   toWireInteger,
   validateDeliveryMode,
+  validateLoginName,
   validateUserMetadataKey,
   validateUserMetadataScanRequest,
   validateUserRef
@@ -69,6 +70,10 @@ export class HTTPClient {
     return this.loginWithPassword(nodeId, userId, await plainPassword(password), options);
   }
 
+  async loginByLoginName(loginName: string, password: string, options?: RequestOptions): Promise<string> {
+    return this.loginByLoginNameWithPassword(loginName, await plainPassword(password), options);
+  }
+
   async loginWithPassword(
     nodeId: string,
     userId: string,
@@ -82,6 +87,30 @@ export class HTTPClient {
       {
         node_id: toRequiredWireInteger(nodeId, "nodeId"),
         user_id: toRequiredWireInteger(userId, "userId"),
+        password: passwordWireValue(password)
+      },
+      [200],
+      options
+    );
+    const token = objectField(response, "token");
+    if (typeof token !== "string" || token === "") {
+      throw new ProtocolError("empty token in login response");
+    }
+    return token;
+  }
+
+  async loginByLoginNameWithPassword(
+    loginName: string,
+    password: PasswordInput,
+    options?: RequestOptions
+  ): Promise<string> {
+    validateLoginName(loginName);
+    const response = await this.doJSON(
+      "POST",
+      "/auth/login",
+      "",
+      {
+        login_name: loginName,
         password: passwordWireValue(password)
       },
       [200],
@@ -111,6 +140,9 @@ export class HTTPClient {
     }
     if (request.profileJson != null && request.profileJson.length > 0) {
       body.profile = parseJson(bytesToUtf8(request.profileJson));
+    }
+    if (request.loginName != null) {
+      body.login_name = request.loginName;
     }
 
     const response = await this.doJSON("POST", "/users", token, body, [200, 201], options);
@@ -153,6 +185,9 @@ export class HTTPClient {
     }
     if (request.role != null) {
       body.role = request.role;
+    }
+    if (request.loginName != null) {
+      body.login_name = request.loginName;
     }
 
     const response = await this.doJSON(
@@ -606,6 +641,7 @@ function userFromHTTP(value: unknown): User {
     nodeId: idToString(objectField(value, "node_id")),
     userId: idToString(objectField(value, "user_id")),
     username: String(objectField(value, "username") ?? ""),
+    loginName: String(objectField(value, "login_name") ?? ""),
     role: String(objectField(value, "role") ?? ""),
     profileJson: jsonValueToBytes(profile),
     systemReserved: Boolean(objectField(value, "system_reserved")),
@@ -686,7 +722,8 @@ function loggedInUserFromHTTP(value: unknown): LoggedInUser {
   return {
     nodeId: idToString(objectField(value, "node_id")),
     userId: idToString(objectField(value, "user_id")),
-    username: String(objectField(value, "username") ?? "")
+    username: String(objectField(value, "username") ?? ""),
+    loginName: String(objectField(value, "login_name") ?? "")
   };
 }
 

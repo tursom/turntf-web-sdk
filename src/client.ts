@@ -3,6 +3,7 @@ import {
   ClientEnvelope as ProtoClientEnvelope,
   ClientMessageSyncMode,
   ServerEnvelope as ProtoServerEnvelope,
+  type LoginRequest as ProtoLoginRequest,
   type SendMessageResponse as ProtoSendMessageResponse,
   type UpsertUserMetadataRequest as ProtoUpsertUserMetadataRequest,
   type UpdateUserRequest as ProtoUpdateUserRequest
@@ -72,7 +73,9 @@ import {
   cursorForMessage,
   toRequiredWireInteger,
   toWireInteger,
+  validateCredentials,
   validateDeliveryMode,
+  validateLoginName,
   validateSessionRef,
   validateUserMetadataKey,
   validateUserMetadataScanRequest,
@@ -155,18 +158,23 @@ export class Client {
     if (options.baseUrl.trim() === "") {
       throw new Error("baseUrl is required");
     }
-    validateUserRef(options.credentials, "credentials");
+    validateCredentials(options.credentials, "credentials");
     validatePassword(options.credentials.password);
 
     this.http = new HTTPClient(
       options.baseUrl,
       options.fetch == null ? {} : { fetch: options.fetch }
     );
-    this.credentials = {
-      nodeId: options.credentials.nodeId,
-      userId: options.credentials.userId,
-      password: options.credentials.password
-    };
+    this.credentials = usesLoginNameCredentials(options.credentials)
+      ? {
+          loginName: options.credentials.loginName,
+          password: options.credentials.password
+        }
+      : {
+          nodeId: options.credentials.nodeId,
+          userId: options.credentials.userId,
+          password: options.credentials.password
+        };
     this.cursorStore = options.cursorStore ?? new MemoryCursorStore();
     this.handler = options.handler ?? new NopHandler();
     this.reconnectEnabled = options.reconnect ?? true;
@@ -194,6 +202,10 @@ export class Client {
     return this.http.login(nodeId, userId, password, options);
   }
 
+  async loginByLoginName(loginName: string, password: string, options?: RequestOptions): Promise<string> {
+    return this.http.loginByLoginName(loginName, password, options);
+  }
+
   async loginWithPassword(
     nodeId: string,
     userId: string,
@@ -201,6 +213,14 @@ export class Client {
     options?: RequestOptions
   ): Promise<string> {
     return this.http.loginWithPassword(nodeId, userId, password, options);
+  }
+
+  async loginByLoginNameWithPassword(
+    loginName: string,
+    password: PasswordInput,
+    options?: RequestOptions
+  ): Promise<string> {
+    return this.http.loginByLoginNameWithPassword(loginName, password, options);
   }
 
   async connect(options?: RequestOptions): Promise<void> {
@@ -365,7 +385,8 @@ export class Client {
             username: request.username,
             password: request.password == null ? "" : passwordWireValue(request.password),
             profileJson: request.profileJson == null ? new Uint8Array(0) : new Uint8Array(request.profileJson),
-            role: request.role
+            role: request.role,
+            loginName: request.loginName ?? ""
           }
         }
       }),
@@ -422,6 +443,9 @@ export class Client {
         }
         if (request.role != null) {
           updateUser.role = { value: request.role };
+        }
+        if (request.loginName != null) {
+          updateUser.loginName = { value: request.loginName };
         }
         return {
           body: {
@@ -898,15 +922,7 @@ export class Client {
       await this.writeProto(socket, {
         body: {
           oneofKind: "login",
-          login: {
-            user: userRefToProto({
-              nodeId: this.credentials.nodeId,
-              userId: this.credentials.userId
-            }),
-            password: passwordWireValue(this.credentials.password),
-            seenMessages: seen.map(cursorToProto),
-            transientOnly: this.transientOnly
-          }
+          login: buildLoginRequest(this.credentials, seen, this.transientOnly)
         }
       });
 
@@ -1623,4 +1639,40 @@ function isResolveUserSessionsResult(value: unknown): value is ResolveUserSessio
 
 function isOperationsStatus(value: unknown): value is OperationsStatus {
   return value != null && typeof value === "object" && "nodeId" in value && "peers" in value;
+}
+
+function usesLoginNameCredentials(
+  credentials: Credentials
+): credentials is Extract<Credentials, { loginName: string }> {
+  return "loginName" in credentials;
+}
+
+function buildLoginRequest(
+  credentials: Credentials,
+  seen: readonly ReturnType<typeof cursorForMessage>[],
+  transientOnly: boolean
+): ProtoLoginRequest {
+  const password = passwordWireValue(credentials.password);
+  const seenMessages = seen.map(cursorToProto);
+
+  if (usesLoginNameCredentials(credentials)) {
+    validateLoginName(credentials.loginName, "credentials.loginName");
+    return {
+      loginName: credentials.loginName,
+      password,
+      seenMessages,
+      transientOnly
+    };
+  }
+
+  return {
+    user: userRefToProto({
+      nodeId: credentials.nodeId,
+      userId: credentials.userId
+    }),
+    loginName: "",
+    password,
+    seenMessages,
+    transientOnly
+  };
 }

@@ -36,6 +36,7 @@ describe("HTTPClient", () => {
               node_id: 4096,
               user_id: "1025",
               username: "alice",
+              login_name: "alice-login",
               role: "user",
               profile: { display_name: "Alice" },
               system_reserved: false,
@@ -48,6 +49,7 @@ describe("HTTPClient", () => {
               node_id: "4096",
               user_id: 1025,
               username: "alice",
+              login_name: "alice-login",
               role: "user",
               profile_json: { display_name: "Alice" },
               system_reserved: false,
@@ -60,6 +62,7 @@ describe("HTTPClient", () => {
               node_id: "4096",
               user_id: "1025",
               username: "alice-2",
+              login_name: "",
               role: "admin",
               profile: { display_name: "Alice 2" },
               system_reserved: false,
@@ -219,8 +222,8 @@ describe("HTTPClient", () => {
           case "GET /cluster/nodes/4096/logged-in-users":
             return jsonResponse({
               items: [
-                { node_id: "4096", user_id: "1025", username: "alice" },
-                { node_id: 4096, user_id: 1026, username: "bob" }
+                { node_id: "4096", user_id: "1025", username: "alice", login_name: "alice-login" },
+                { node_id: 4096, user_id: 1026, username: "bob", login_name: "" }
               ]
             });
           case "GET /events?after=7&limit=2":
@@ -304,27 +307,32 @@ describe("HTTPClient", () => {
 
     const created = await client.createUser(token, {
       username: "alice",
+      loginName: "alice-login",
       password: plainPasswordSync("alice-password"),
       profileJson: new TextEncoder().encode("{\"display_name\":\"Alice\"}"),
       role: "user"
     });
     expect(created.userId).toBe("1025");
+    expect(created.loginName).toBe("alice-login");
     expect(new TextDecoder().decode(created.profileJson)).toBe("{\"display_name\":\"Alice\"}");
 
     const fetched = await client.getUser(token, { nodeId: "4096", userId: "1025" });
     expect(fetched.nodeId).toBe("4096");
+    expect(fetched.loginName).toBe("alice-login");
 
     const updated = await client.updateUser(
       token,
       { nodeId: "4096", userId: "1025" },
       {
         username: "alice-2",
+        loginName: "",
         password: plainPasswordSync("new-password"),
         profileJson: new TextEncoder().encode("{\"display_name\":\"Alice 2\"}"),
         role: "admin"
       }
     );
     expect(updated.role).toBe("admin");
+    expect(updated.loginName).toBe("");
     expect(new TextDecoder().decode(updated.profileJson)).toBe("{\"display_name\":\"Alice 2\"}");
 
     const deleted = await client.deleteUser(token, { nodeId: "4096", userId: "1025" });
@@ -423,6 +431,8 @@ describe("HTTPClient", () => {
 
     const onlineUsers = await client.listNodeLoggedInUsers(token, "4096");
     expect(onlineUsers[1]?.username).toBe("bob");
+    expect(onlineUsers[0]?.loginName).toBe("alice-login");
+    expect(onlineUsers[1]?.loginName).toBe("");
 
     const events = await client.listEvents(token, "7", 2);
     expect(events[0]?.eventId).toBe("88");
@@ -445,6 +455,7 @@ describe("HTTPClient", () => {
     expect(createUserCall?.auth).toBe("Bearer token-1");
     expect(JSON.parse(createUserCall?.bodyText ?? "{}")).toMatchObject({
       username: "alice",
+      login_name: "alice-login",
       role: "user",
       profile: { display_name: "Alice" }
     });
@@ -465,6 +476,63 @@ describe("HTTPClient", () => {
       body: "cGFja2V0",
       delivery_kind: "transient",
       delivery_mode: "route_retry"
+    });
+  });
+
+  it("supports login_name authentication and preserves login_name updates", async () => {
+    const calls: Array<{ method: string; path: string; bodyText: string }> = [];
+    const client = new HTTPClient("http://127.0.0.1:8080", {
+      fetch: async (input, init) => {
+        const method = init?.method ?? "GET";
+        const url = typeof input === "string"
+          ? new URL(input)
+          : input instanceof URL
+            ? input
+            : new URL(input.url);
+        const path = `${url.pathname}${url.search}`;
+        const bodyText = typeof init?.body === "string" ? init.body : "";
+        calls.push({ method, path, bodyText });
+
+        switch (`${method} ${path}`) {
+          case "POST /auth/login":
+            return jsonResponse({ token: "token-login-name" });
+          case "PATCH /nodes/4096/users/1025":
+            return jsonResponse({
+              node_id: "4096",
+              user_id: "1025",
+              username: "alice",
+              login_name: "",
+              role: "user",
+              profile: { display_name: "Alice" },
+              system_reserved: false,
+              created_at: "2026-04-28T00:00:00Z",
+              updated_at: "2026-04-28T02:00:00Z",
+              origin_node_id: "4096"
+            });
+          default:
+            throw new Error(`unexpected request: ${method} ${path}`);
+        }
+      }
+    });
+
+    const token = await client.loginByLoginName("root-login", "root-password");
+    expect(token).toBe("token-login-name");
+
+    const updated = await client.updateUser(
+      "token-login-name",
+      { nodeId: "4096", userId: "1025" },
+      { loginName: "" }
+    );
+    expect(updated.loginName).toBe("");
+
+    const loginCall = calls.find((call) => call.method === "POST" && call.path === "/auth/login");
+    const loginPayload = JSON.parse(loginCall?.bodyText ?? "{}") as { login_name: string; password: string };
+    expect(loginPayload.login_name).toBe("root-login");
+    expect(bcrypt.compareSync("root-password", loginPayload.password)).toBe(true);
+
+    const updateCall = calls.find((call) => call.method === "PATCH" && call.path === "/nodes/4096/users/1025");
+    expect(JSON.parse(updateCall?.bodyText ?? "{}")).toEqual({
+      login_name: ""
     });
   });
 

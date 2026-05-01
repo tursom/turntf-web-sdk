@@ -68,6 +68,7 @@ describe("Client", () => {
               nodeId: "4096",
               userId: "1025",
               username: "alice",
+              loginName: "alice-login",
               role: "user",
               profileJson: new Uint8Array(0),
               systemReserved: false,
@@ -189,6 +190,44 @@ describe("Client", () => {
 
       await conn.sendServerEnvelope(loginResponseEnvelope());
       await connectPromise;
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
+  it("supports login_name credentials during websocket login", async () => {
+    const server = await TestServer.start();
+    const handler = new RecordingHandler();
+    const client = new Client({
+      baseUrl: server.baseUrl(),
+      credentials: {
+        loginName: "alice-login",
+        password: plainPasswordSync("alice-password")
+      },
+      handler,
+      requestTimeoutMs: 200,
+      pingIntervalMs: 60_000
+    });
+
+    try {
+      const connectPromise = client.connect();
+      const conn = await server.nextConnection();
+      const login = await conn.readClientEnvelope();
+      const loginBody = clientBody(login, "login");
+
+      expect(loginBody.login.user).toBeUndefined();
+      expect(loginBody.login.loginName).toBe("alice-login");
+      expect(bcrypt.compareSync("alice-password", loginBody.login.password)).toBe(true);
+
+      await conn.sendServerEnvelope(loginResponseEnvelope("session-login-name", "alice-login"));
+      await connectPromise;
+
+      expect(handler.logins[0]?.user.loginName).toBe("alice-login");
+      expect(client.sessionRef).toEqual({
+        servingNodeId: "4096",
+        sessionId: "session-login-name"
+      });
     } finally {
       await client.close();
       await server.close();
@@ -330,6 +369,7 @@ describe("Client", () => {
 
       const createPromise = client.createUser({
         username: "alice",
+        loginName: "alice-login",
         password: plainPasswordSync("alice-password"),
         profileJson: Buffer.from("{\"display_name\":\"Alice\"}"),
         role: "user"
@@ -337,16 +377,19 @@ describe("Client", () => {
       const createReq = await conn.readClientEnvelope();
       const createBody = clientBody(createReq, "createUser");
       expect(bcrypt.compareSync("alice-password", createBody.createUser.password)).toBe(true);
+      expect(createBody.createUser.loginName).toBe("alice-login");
       await conn.sendServerEnvelope({
         body: {
           oneofKind: "createUserResponse",
           createUserResponse: {
             requestId: createBody.createUser.requestId,
-            user: userRecord("alice")
+            user: userRecord("alice", "user", "alice-login")
           }
         }
       });
-      expect((await createPromise).username).toBe("alice");
+      const createdUser = await createPromise;
+      expect(createdUser.username).toBe("alice");
+      expect(createdUser.loginName).toBe("alice-login");
 
       const getUserPromise = client.getUser(target);
       const getUserReq = await conn.readClientEnvelope();
@@ -365,6 +408,7 @@ describe("Client", () => {
 
       const updatePromise = client.updateUser(target, {
         username: "alice-2",
+        loginName: "",
         password: plainPasswordSync("new-password"),
         profileJson: Buffer.from("{\"display_name\":\"Alice 2\"}"),
         role: "admin"
@@ -372,6 +416,7 @@ describe("Client", () => {
       const updateReq = await conn.readClientEnvelope();
       const updateBody = clientBody(updateReq, "updateUser");
       expect(updateBody.updateUser.username?.value).toBe("alice-2");
+      expect(updateBody.updateUser.loginName?.value).toBe("");
       expect(updateBody.updateUser.role?.value).toBe("admin");
       expect(Array.from(updateBody.updateUser.profileJson?.value ?? new Uint8Array(0))).toEqual(
         Array.from(Buffer.from("{\"display_name\":\"Alice 2\"}"))
@@ -382,11 +427,13 @@ describe("Client", () => {
           oneofKind: "updateUserResponse",
           updateUserResponse: {
             requestId: updateBody.updateUser.requestId,
-            user: userRecord("alice-2", "admin")
+            user: userRecord("alice-2", "admin", "")
           }
         }
       });
-      expect((await updatePromise).role).toBe("admin");
+      const updatedUser = await updatePromise;
+      expect(updatedUser.role).toBe("admin");
+      expect(updatedUser.loginName).toBe("");
 
       const deletePromise = client.deleteUser(target);
       const deleteReq = await conn.readClientEnvelope();
@@ -651,14 +698,17 @@ describe("Client", () => {
             requestId: listLoggedInBody.listNodeLoggedInUsers.requestId,
             targetNodeId: "4096",
             items: [
-              { nodeId: "4096", userId: "1025", username: "alice" },
-              { nodeId: "4096", userId: "1026", username: "bob" }
+              { nodeId: "4096", userId: "1025", username: "alice", loginName: "alice-login" },
+              { nodeId: "4096", userId: "1026", username: "bob", loginName: "" }
             ],
             count: 2
           }
         }
       });
-      expect((await listLoggedInPromise)[1]?.username).toBe("bob");
+      const loggedInUsers = await listLoggedInPromise;
+      expect(loggedInUsers[1]?.username).toBe("bob");
+      expect(loggedInUsers[0]?.loginName).toBe("alice-login");
+      expect(loggedInUsers[1]?.loginName).toBe("");
 
       const statusPromise = client.operationsStatus();
       const statusReq = await conn.readClientEnvelope();
@@ -1229,12 +1279,12 @@ class TestConnection {
   }
 }
 
-function loginResponseEnvelope(sessionId = "session-alice"): proto.ServerEnvelope {
+function loginResponseEnvelope(sessionId = "session-alice", loginName = "alice-login"): proto.ServerEnvelope {
   return {
     body: {
       oneofKind: "loginResponse",
       loginResponse: {
-        user: userRecord("alice"),
+        user: userRecord("alice", "user", loginName),
         protocolVersion: "client-v1alpha1",
         sessionRef: sessionRefRecord(sessionId)
       }
@@ -1254,11 +1304,12 @@ function clientBody<K extends proto.ClientEnvelope["body"]["oneofKind"]>(
   return envelope.body as Extract<proto.ClientEnvelope["body"], { oneofKind: K }>;
 }
 
-function userRecord(username: string, role = "user"): proto.User {
+function userRecord(username: string, role = "user", loginName = "alice-login"): proto.User {
   return {
     nodeId: "4096",
     userId: "1025",
     username,
+    loginName,
     role,
     profileJson: Buffer.from("{\"display_name\":\"Alice\"}"),
     systemReserved: false,
