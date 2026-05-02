@@ -54,26 +54,66 @@ import { cloneBytes } from "./utils";
 
 const zeroUserRef: UserRef = { nodeId: "0", userId: "0" };
 
+/**
+ * 将 SDK 的 UserRef 转换为 protobuf 的 ProtoUserRef。
+ *
+ * @param ref - SDK 用户引用对象
+ * @returns protobuf 用户引用对象
+ */
 export function userRefToProto(ref: UserRef): ProtoUserRef {
   return { nodeId: ref.nodeId, userId: ref.userId };
 }
 
+/**
+ * 将 SDK 的 SessionRef 转换为 protobuf 的 ProtoSessionRef。
+ *
+ * @param ref - SDK 会话引用对象
+ * @returns protobuf 会话引用对象
+ */
 export function sessionRefToProto(ref: SessionRef): ProtoSessionRef {
   return { servingNodeId: ref.servingNodeId, sessionId: ref.sessionId };
 }
 
+/**
+ * 将 SDK 的 MessageCursor 转换为 protobuf 的 ProtoMessageCursor。
+ *
+ * @param cursor - SDK 消息游标
+ * @returns protobuf 消息游标
+ */
 export function cursorToProto(cursor: MessageCursor): ProtoMessageCursor {
   return { nodeId: cursor.nodeId, seq: cursor.seq };
 }
 
+/**
+ * 将 protobuf 的 ProtoMessageCursor 转换为 SDK 的 MessageCursor。
+ * 如果传入 undefined，返回默认游标（nodeId 和 seq 均为 "0"）。
+ *
+ * @param cursor - protobuf 消息游标（可选）
+ * @returns SDK 消息游标
+ */
 export function cursorFromProto(cursor: ProtoMessageCursor | undefined): MessageCursor {
   return { nodeId: cursor?.nodeId ?? "0", seq: cursor?.seq ?? "0" };
 }
 
+/**
+ * 将 protobuf 的 ProtoUserRef 转换为 SDK 的 UserRef。
+ * 如果传入 undefined，返回默认零值引用（nodeId 和 userId 均为 "0"）。
+ *
+ * @param ref - protobuf 用户引用（可选）
+ * @returns SDK 用户引用对象
+ */
 export function userRefFromProto(ref: ProtoUserRef | undefined): UserRef {
   return ref == null ? { ...zeroUserRef } : { nodeId: ref.nodeId, userId: ref.userId };
 }
 
+/**
+ * 将 protobuf 的 ProtoSessionRef 转换为 SDK 的 SessionRef。
+ * 如果传入 undefined，抛出 ProtocolError。
+ *
+ * @param ref - protobuf 会话引用（可选）
+ * @returns SDK 会话引用对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function sessionRefFromProto(ref: ProtoSessionRef | undefined): SessionRef {
   if (ref == null) {
     throw new ProtocolError("missing session_ref");
@@ -81,6 +121,13 @@ export function sessionRefFromProto(ref: ProtoSessionRef | undefined): SessionRe
   return { servingNodeId: ref.servingNodeId, sessionId: ref.sessionId };
 }
 
+/**
+ * 将 protobuf 的 ProtoSessionRef 可选地转换为 SDK 的 SessionRef。
+ * 与 {@link sessionRefFromProto} 不同，传入 undefined 时返回 undefined 而非抛出错误。
+ *
+ * @param ref - protobuf 会话引用（可选）
+ * @returns SDK 会话引用对象，如果未提供则返回 undefined
+ */
 export function optionalSessionRefFromProto(ref: ProtoSessionRef | undefined): SessionRef | undefined {
   if (ref == null) {
     return undefined;
@@ -88,6 +135,13 @@ export function optionalSessionRefFromProto(ref: ProtoSessionRef | undefined): S
   return { servingNodeId: ref.servingNodeId, sessionId: ref.sessionId };
 }
 
+/**
+ * 将 protobuf 的 ProtoUser 转换为 SDK 的 User 对象。
+ *
+ * @param user - protobuf 用户对象（可选）
+ * @returns SDK 用户对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function userFromProto(user: ProtoUser | undefined): User {
   if (user == null) {
     throw new ProtocolError("missing user");
@@ -106,6 +160,13 @@ export function userFromProto(user: ProtoUser | undefined): User {
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoMessage 转换为 SDK 的 Message 对象。
+ *
+ * @param message - protobuf 消息对象（可选）
+ * @returns SDK 消息对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function messageFromProto(message: ProtoMessage | undefined): Message {
   if (message == null) {
     throw new ProtocolError("missing message");
@@ -120,6 +181,13 @@ export function messageFromProto(message: ProtoMessage | undefined): Message {
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoPacket 转换为 SDK 的 Packet 对象。
+ *
+ * @param packet - protobuf 数据包对象（可选）
+ * @returns SDK 数据包对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function packetFromProto(packet: ProtoPacket | undefined): Packet {
   if (packet == null) {
     throw new ProtocolError("missing packet");
@@ -140,6 +208,13 @@ export function packetFromProto(packet: ProtoPacket | undefined): Packet {
   return mapped;
 }
 
+/**
+ * 将 protobuf 的 ProtoTransientAccepted 转换为 SDK 的 RelayAccepted 对象。
+ *
+ * @param accepted - protobuf 中继确认对象（可选）
+ * @returns SDK 中继确认对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function relayAcceptedFromProto(accepted: ProtoTransientAccepted | undefined): RelayAccepted {
   if (accepted == null) {
     throw new ProtocolError("missing transient_accepted");
@@ -173,6 +248,12 @@ function attachmentTypeFromProto(type: ProtoAttachmentType): AttachmentType {
   }
 }
 
+/**
+ * 将 SDK 的 AttachmentType 转换为 protobuf 的 ProtoAttachmentType。
+ *
+ * @param type - SDK 附件类型
+ * @returns protobuf 附件类型
+ */
 export function attachmentTypeToProto(type: AttachmentType): ProtoAttachmentType {
   switch (type) {
     case AttachmentType.ChannelManager:
@@ -188,6 +269,13 @@ export function attachmentTypeToProto(type: AttachmentType): ProtoAttachmentType
   }
 }
 
+/**
+ * 将 protobuf 的 ProtoAttachment 转换为 SDK 的 Attachment 对象。
+ *
+ * @param attachment - protobuf 附件对象（可选）
+ * @returns SDK 附件对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function attachmentFromProto(attachment: ProtoAttachment | undefined): Attachment {
   if (attachment == null) {
     throw new ProtocolError("missing attachment");
@@ -203,6 +291,14 @@ export function attachmentFromProto(attachment: ProtoAttachment | undefined): At
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoAttachment 转换为 SDK 的 Subscription 对象。
+ * ProtoAttachment 的 owner 映射为 subscriber，subject 映射为 channel。
+ *
+ * @param subscription - protobuf 附件对象（可选）
+ * @returns SDK 订阅对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function subscriptionFromProto(subscription: ProtoAttachment | undefined): Subscription {
   const attachment = attachmentFromProto(subscription);
   return {
@@ -214,6 +310,14 @@ export function subscriptionFromProto(subscription: ProtoAttachment | undefined)
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoAttachment 转换为 SDK 的 BlacklistEntry 对象。
+ * ProtoAttachment 的 owner 映射为 blacklist 的 owner，subject 映射为 blocked。
+ *
+ * @param entry - protobuf 附件对象（可选）
+ * @returns SDK 黑名单条目对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function blacklistEntryFromProto(entry: ProtoAttachment | undefined): BlacklistEntry {
   const attachment = attachmentFromProto(entry);
   return {
@@ -225,6 +329,13 @@ export function blacklistEntryFromProto(entry: ProtoAttachment | undefined): Bla
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoUserMetadata 转换为 SDK 的 UserMetadata 对象。
+ *
+ * @param metadata - protobuf 用户元数据对象（可选）
+ * @returns SDK 用户元数据对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function userMetadataFromProto(metadata: ProtoUserMetadata | undefined): UserMetadata {
   if (metadata == null) {
     throw new ProtocolError("missing user metadata");
@@ -240,6 +351,13 @@ export function userMetadataFromProto(metadata: ProtoUserMetadata | undefined): 
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoScanUserMetadataResponse 转换为 SDK 的 ScanUserMetadataResult。
+ *
+ * @param response - protobuf 扫描元数据响应（可选）
+ * @returns SDK 扫描元数据结果
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function scanUserMetadataResultFromProto(
   response: ProtoScanUserMetadataResponse | undefined
 ): ScanUserMetadataResult {
@@ -253,6 +371,13 @@ export function scanUserMetadataResultFromProto(
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoEvent 转换为 SDK 的 Event 对象。
+ *
+ * @param event - protobuf 事件对象（可选）
+ * @returns SDK 事件对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function eventFromProto(event: ProtoEvent | undefined): Event {
   if (event == null) {
     throw new ProtocolError("missing event");
@@ -270,6 +395,13 @@ export function eventFromProto(event: ProtoEvent | undefined): Event {
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoClusterNode 转换为 SDK 的 ClusterNode 对象。
+ *
+ * @param node - protobuf 集群节点对象（可选）
+ * @returns SDK 集群节点对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function clusterNodeFromProto(node: ProtoClusterNode | undefined): ClusterNode {
   if (node == null) {
     throw new ProtocolError("missing cluster node");
@@ -282,6 +414,13 @@ export function clusterNodeFromProto(node: ProtoClusterNode | undefined): Cluste
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoLoggedInUser 转换为 SDK 的 LoggedInUser 对象。
+ *
+ * @param user - protobuf 已登录用户对象（可选）
+ * @returns SDK 已登录用户对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function loggedInUserFromProto(user: ProtoLoggedInUser | undefined): LoggedInUser {
   if (user == null) {
     throw new ProtocolError("missing logged-in user");
@@ -294,6 +433,13 @@ export function loggedInUserFromProto(user: ProtoLoggedInUser | undefined): Logg
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoOnlineNodePresence 转换为 SDK 的 OnlineNodePresence 对象。
+ *
+ * @param item - protobuf 在线节点状态对象（可选）
+ * @returns SDK 在线节点状态对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function onlineNodePresenceFromProto(item: ProtoOnlineNodePresence | undefined): OnlineNodePresence {
   if (item == null) {
     throw new ProtocolError("missing online node presence");
@@ -305,6 +451,13 @@ export function onlineNodePresenceFromProto(item: ProtoOnlineNodePresence | unde
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoResolvedSession 转换为 SDK 的 ResolvedSession 对象。
+ *
+ * @param item - protobuf 已解析会话对象（可选）
+ * @returns SDK 已解析会话对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function resolvedSessionFromProto(item: ProtoResolvedSession | undefined): ResolvedSession {
   if (item == null) {
     throw new ProtocolError("missing resolved session");
@@ -316,6 +469,13 @@ export function resolvedSessionFromProto(item: ProtoResolvedSession | undefined)
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoResolveUserSessionsResponse 转换为 SDK 的 ResolveUserSessionsResult。
+ *
+ * @param response - protobuf 解析用户会话响应（可选）
+ * @returns SDK 解析用户会话结果
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function resolveUserSessionsFromProto(
   response: ProtoResolveUserSessionsResponse | undefined
 ): ResolveUserSessionsResult {
@@ -329,6 +489,13 @@ export function resolveUserSessionsFromProto(
   };
 }
 
+/**
+ * 将 protobuf 的 ProtoOperationsStatus 转换为 SDK 的 OperationsStatus 对象。
+ *
+ * @param status - protobuf 操作状态对象（可选）
+ * @returns SDK 操作状态对象
+ * @throws {@link ProtocolError} 如果传入 undefined
+ */
 export function operationsStatusFromProto(status: ProtoOperationsStatus | undefined): OperationsStatus {
   if (status == null) {
     throw new ProtocolError("missing operations status");
@@ -398,42 +565,102 @@ function peerStatusFromProto(status: ProtoPeerStatus): PeerStatus {
   };
 }
 
+/**
+ * 批量将 protobuf 的 ProtoMessage 数组转换为 SDK 的 Message 数组。
+ *
+ * @param items - protobuf 消息对象数组
+ * @returns SDK 消息对象数组
+ */
 export function messagesFromProto(items: ProtoMessage[]): Message[] {
   return items.map(messageFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoAttachment 数组转换为 SDK 的 Attachment 数组。
+ *
+ * @param items - protobuf 附件对象数组
+ * @returns SDK 附件对象数组
+ */
 export function attachmentsFromProto(items: ProtoAttachment[]): Attachment[] {
   return items.map(attachmentFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoAttachment 数组转换为 SDK 的 Subscription 数组。
+ *
+ * @param items - protobuf 附件对象数组
+ * @returns SDK 订阅对象数组
+ */
 export function subscriptionsFromProto(items: ProtoAttachment[]): Subscription[] {
   return items.map(subscriptionFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoAttachment 数组转换为 SDK 的 BlacklistEntry 数组。
+ *
+ * @param items - protobuf 附件对象数组
+ * @returns SDK 黑名单条目数组
+ */
 export function blacklistEntriesFromProto(items: ProtoAttachment[]): BlacklistEntry[] {
   return items.map(blacklistEntryFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoEvent 数组转换为 SDK 的 Event 数组。
+ *
+ * @param items - protobuf 事件对象数组
+ * @returns SDK 事件对象数组
+ */
 export function eventsFromProto(items: ProtoEvent[]): Event[] {
   return items.map(eventFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoClusterNode 数组转换为 SDK 的 ClusterNode 数组。
+ *
+ * @param items - protobuf 集群节点对象数组
+ * @returns SDK 集群节点对象数组
+ */
 export function clusterNodesFromProto(items: ProtoClusterNode[]): ClusterNode[] {
   return items.map(clusterNodeFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoLoggedInUser 数组转换为 SDK 的 LoggedInUser 数组。
+ *
+ * @param items - protobuf 已登录用户对象数组
+ * @returns SDK 已登录用户对象数组
+ */
 export function loggedInUsersFromProto(items: ProtoLoggedInUser[]): LoggedInUser[] {
   return items.map(loggedInUserFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoOnlineNodePresence 数组转换为 SDK 的 OnlineNodePresence 数组。
+ *
+ * @param items - protobuf 在线节点状态对象数组
+ * @returns SDK 在线节点状态对象数组
+ */
 export function onlineNodePresencesFromProto(items: ProtoOnlineNodePresence[]): OnlineNodePresence[] {
   return items.map(onlineNodePresenceFromProto);
 }
 
+/**
+ * 批量将 protobuf 的 ProtoResolvedSession 数组转换为 SDK 的 ResolvedSession 数组。
+ *
+ * @param items - protobuf 已解析会话对象数组
+ * @returns SDK 已解析会话对象数组
+ */
 export function resolvedSessionsFromProto(items: ProtoResolvedSession[]): ResolvedSession[] {
   return items.map(resolvedSessionFromProto);
 }
 
+/**
+ * 将 SDK 的 DeliveryMode 转换为 protobuf 的 ClientDeliveryMode。
+ *
+ * @param mode - SDK 投递模式
+ * @returns protobuf 投递模式
+ */
 export function deliveryModeToProto(mode: DeliveryMode): ClientDeliveryMode {
   switch (mode) {
     case DeliveryMode.BestEffort:
@@ -445,6 +672,12 @@ export function deliveryModeToProto(mode: DeliveryMode): ClientDeliveryMode {
   }
 }
 
+/**
+ * 将 protobuf 的 ClientDeliveryMode 转换为 SDK 的 DeliveryMode。
+ *
+ * @param mode - protobuf 投递模式
+ * @returns SDK 投递模式
+ */
 export function deliveryModeFromProto(mode: ClientDeliveryMode): DeliveryMode {
   switch (mode) {
     case ClientDeliveryMode.BEST_EFFORT:

@@ -46,14 +46,35 @@ import {
   validateUserRef
 } from "./validation";
 
+/**
+ * HTTP 客户端选项。
+ */
 export interface HTTPClientOptions {
+  /** 自定义的 fetch 实现，可用于 Node.js 等不支持全局 fetch 的环境 */
   fetch?: typeof fetch;
 }
 
+/**
+ * turntf 的 HTTP API 客户端。
+ * 提供与 turntf 服务器通信的 REST API 封装，包括认证、用户管理、消息收发、
+ * 元数据操作、附件管理、频道订阅、集群管理等。
+ *
+ * 所有返回 Promise 的方法均可通过 {@link RequestOptions} 控制超时和取消。
+ *
+ * @example
+ * const client = new HTTPClient("https://turntf.example.com");
+ * const token = await client.login("1", "1001", "password");
+ */
 export class HTTPClient {
+  /** 服务器基础 URL */
   readonly baseUrl: string;
-  private readonly fetchImpl: typeof fetch;
 
+  /**
+   * 创建一个 HTTPClient 实例。
+   * @param baseUrl - 服务器基础 URL（如 "https://turntf.example.com"）
+   * @param options - 可选的客户端配置
+   * @throws 如果 baseUrl 为空或 fetch 不可用则抛出错误
+   */
   constructor(baseUrl: string, options: HTTPClientOptions = {}) {
     if (baseUrl.trim() === "") {
       throw new Error("baseUrl is required");
@@ -66,14 +87,43 @@ export class HTTPClient {
     this.fetchImpl = fetchImpl;
   }
 
+  /**
+   * 使用用户 ID 和密码登录。
+   * 密码将自动进行 bcrypt 哈希处理。
+   *
+   * @param nodeId - 用户所属节点 ID
+   * @param userId - 用户 ID
+   * @param password - 原始密码字符串
+   * @param options - 可选的请求配置
+   * @returns 认证令牌（Bearer token）
+   */
   async login(nodeId: string, userId: string, password: string, options?: RequestOptions): Promise<string> {
     return this.loginWithPassword(nodeId, userId, await plainPassword(password), options);
   }
 
+  /**
+   * 使用登录名和密码登录。
+   * 密码将自动进行 bcrypt 哈希处理。
+   *
+   * @param loginName - 登录名
+   * @param password - 原始密码字符串
+   * @param options - 可选的请求配置
+   * @returns 认证令牌（Bearer token）
+   */
   async loginByLoginName(loginName: string, password: string, options?: RequestOptions): Promise<string> {
     return this.loginByLoginNameWithPassword(loginName, await plainPassword(password), options);
   }
 
+  /**
+   * 使用用户 ID 和预处理的密码输入对象登录。
+   * 适用于密码已在外部完成 bcrypt 哈希的场景。
+   *
+   * @param nodeId - 用户所属节点 ID
+   * @param userId - 用户 ID
+   * @param password - 密码输入对象（使用 {@link plainPassword} 或 {@link hashedPassword} 创建）
+   * @param options - 可选的请求配置
+   * @returns 认证令牌（Bearer token）
+   */
   async loginWithPassword(
     nodeId: string,
     userId: string,
@@ -99,6 +149,14 @@ export class HTTPClient {
     return token;
   }
 
+  /**
+   * 使用登录名和预处理的密码输入对象登录。
+   *
+   * @param loginName - 登录名
+   * @param password - 密码输入对象
+   * @param options - 可选的请求配置
+   * @returns 认证令牌（Bearer token）
+   */
   async loginByLoginNameWithPassword(
     loginName: string,
     password: PasswordInput,
@@ -123,6 +181,15 @@ export class HTTPClient {
     return token;
   }
 
+  /**
+   * 创建新用户。
+   *
+   * @param token - 认证令牌
+   * @param request - 创建用户请求参数
+   * @param options - 可选的请求配置
+   * @returns 创建后的用户对象
+   * @throws 如果 username 或 role 为空则抛出错误
+   */
   async createUser(token: string, request: CreateUserRequest, options?: RequestOptions): Promise<User> {
     if (request.username === "") {
       throw new Error("username is required");
@@ -149,6 +216,15 @@ export class HTTPClient {
     return userFromHTTP(response);
   }
 
+  /**
+   * 创建频道（角色默认为 "channel"）。
+   * 是 {@link createUser} 的便捷方法，自动设置 role 为 "channel"。
+   *
+   * @param token - 认证令牌
+   * @param request - 创建频道的请求参数（无需提供 role）
+   * @param options - 可选的请求配置
+   * @returns 创建后的频道用户对象
+   */
   createChannel(
     token: string,
     request: Omit<CreateUserRequest, "role"> & Partial<Pick<CreateUserRequest, "role">>,
@@ -157,6 +233,14 @@ export class HTTPClient {
     return this.createUser(token, { ...request, role: request.role ?? "channel" }, options);
   }
 
+  /**
+   * 获取用户信息。
+   *
+   * @param token - 认证令牌
+   * @param target - 目标用户引用
+   * @param options - 可选的请求配置
+   * @returns 用户对象
+   */
   async getUser(token: string, target: UserRef, options?: RequestOptions): Promise<User> {
     validateUserRef(target, "target");
     const response = await this.doJSON(
@@ -170,6 +254,16 @@ export class HTTPClient {
     return userFromHTTP(response);
   }
 
+  /**
+   * 更新用户信息。
+   * 仅更新请求中提供的字段，未提供的字段保持不变。
+   *
+   * @param token - 认证令牌
+   * @param target - 目标用户引用
+   * @param request - 更新请求参数（所有字段可选）
+   * @param options - 可选的请求配置
+   * @returns 更新后的用户对象
+   */
   async updateUser(token: string, target: UserRef, request: UpdateUserRequest, options?: RequestOptions): Promise<User> {
     validateUserRef(target, "target");
 
@@ -201,6 +295,14 @@ export class HTTPClient {
     return userFromHTTP(response);
   }
 
+  /**
+   * 删除用户。
+   *
+   * @param token - 认证令牌
+   * @param target - 目标用户引用
+   * @param options - 可选的请求配置
+   * @returns 删除操作结果
+   */
   async deleteUser(token: string, target: UserRef, options?: RequestOptions): Promise<DeleteUserResult> {
     validateUserRef(target, "target");
     const response = await this.doJSON(
@@ -214,6 +316,15 @@ export class HTTPClient {
     return deleteUserResultFromHTTP(response);
   }
 
+  /**
+   * 获取用户元数据。
+   *
+   * @param token - 认证令牌
+   * @param owner - 元数据所有者的用户引用
+   * @param key - 元数据键名
+   * @param options - 可选的请求配置
+   * @returns 用户元数据对象
+   */
   async getUserMetadata(token: string, owner: UserRef, key: string, options?: RequestOptions): Promise<UserMetadata> {
     validateUserRef(owner, "owner");
     validateUserMetadataKey(key);
@@ -229,6 +340,17 @@ export class HTTPClient {
     return userMetadataFromHTTP(response);
   }
 
+  /**
+   * 插入或更新用户元数据。
+   * 如果键已存在则更新，不存在则创建。
+   *
+   * @param token - 认证令牌
+   * @param owner - 元数据所有者的用户引用
+   * @param key - 元数据键名
+   * @param request - 更新请求参数
+   * @param options - 可选的请求配置
+   * @returns 更新后的用户元数据对象
+   */
   async upsertUserMetadata(
     token: string,
     owner: UserRef,
@@ -257,6 +379,15 @@ export class HTTPClient {
     return userMetadataFromHTTP(response);
   }
 
+  /**
+   * 删除用户元数据。
+   *
+   * @param token - 认证令牌
+   * @param owner - 元数据所有者的用户引用
+   * @param key - 元数据键名
+   * @param options - 可选的请求配置
+   * @returns 被删除的用户元数据对象
+   */
   async deleteUserMetadata(token: string, owner: UserRef, key: string, options?: RequestOptions): Promise<UserMetadata> {
     validateUserRef(owner, "owner");
     validateUserMetadataKey(key);
@@ -272,6 +403,16 @@ export class HTTPClient {
     return userMetadataFromHTTP(response);
   }
 
+  /**
+   * 扫描用户元数据。
+   * 支持按前缀过滤和分页查询。
+   *
+   * @param token - 认证令牌
+   * @param owner - 元数据所有者的用户引用
+   * @param request - 扫描请求参数（可选，默认扫描全部）
+   * @param options - 可选的请求配置
+   * @returns 扫描结果，包含条目列表和下一页游标
+   */
   async scanUserMetadata(
     token: string,
     owner: UserRef,
@@ -304,6 +445,15 @@ export class HTTPClient {
     return userMetadataScanResultFromHTTP(response);
   }
 
+  /**
+   * 创建频道订阅。
+   *
+   * @param token - 认证令牌
+   * @param user - 订阅者用户引用
+   * @param channel - 频道用户引用
+   * @param options - 可选的请求配置
+   * @returns 订阅关系对象
+   */
   async createSubscription(token: string, user: UserRef, channel: UserRef, options?: RequestOptions): Promise<Subscription> {
     const attachment = await this.upsertAttachment(
       token,
@@ -316,20 +466,55 @@ export class HTTPClient {
     return subscriptionFromAttachment(attachment);
   }
 
+  /**
+   * 订阅频道（{@link createSubscription} 的别名）。
+   *
+   * @param token - 认证令牌
+   * @param subscriber - 订阅者用户引用
+   * @param channel - 频道用户引用
+   * @param options - 可选的请求配置
+   * @returns 订阅关系对象
+   */
   subscribeChannel(token: string, subscriber: UserRef, channel: UserRef, options?: RequestOptions): Promise<Subscription> {
     return this.createSubscription(token, subscriber, channel, options);
   }
 
+  /**
+   * 取消频道订阅。
+   *
+   * @param token - 认证令牌
+   * @param subscriber - 订阅者用户引用
+   * @param channel - 频道用户引用
+   * @param options - 可选的请求配置
+   * @returns 被取消的订阅关系对象
+   */
   async unsubscribeChannel(token: string, subscriber: UserRef, channel: UserRef, options?: RequestOptions): Promise<Subscription> {
     const attachment = await this.deleteAttachment(token, subscriber, channel, AttachmentType.ChannelSubscription, options);
     return subscriptionFromAttachment(attachment);
   }
 
+  /**
+   * 列出用户的所有频道订阅。
+   *
+   * @param token - 认证令牌
+   * @param subscriber - 订阅者用户引用
+   * @param options - 可选的请求配置
+   * @returns 订阅关系对象数组
+   */
   async listSubscriptions(token: string, subscriber: UserRef, options?: RequestOptions): Promise<Subscription[]> {
     const items = await this.listAttachments(token, subscriber, AttachmentType.ChannelSubscription, options);
     return items.map(subscriptionFromAttachment);
   }
 
+  /**
+   * 列出用户的消息列表。
+   *
+   * @param token - 认证令牌
+   * @param target - 目标用户引用
+   * @param limit - 返回的最大消息数量（0 表示不限制）
+   * @param options - 可选的请求配置
+   * @returns 消息对象数组
+   */
   async listMessages(token: string, target: UserRef, limit = 0, options?: RequestOptions): Promise<Message[]> {
     validateUserRef(target, "target");
     validateLimit(limit, "limit");
@@ -345,6 +530,17 @@ export class HTTPClient {
     return itemsField(response, ["items"]).map(messageFromHTTP);
   }
 
+  /**
+   * 发送持久化消息。
+   * 消息将被持久化存储，断线后用户仍可收到。
+   *
+   * @param token - 认证令牌
+   * @param target - 目标用户引用
+   * @param body - 消息体字节数据
+   * @param options - 可选的请求配置
+   * @returns 发送后的消息对象
+   * @throws 如果消息体为空则抛出错误
+   */
   async postMessage(token: string, target: UserRef, body: Uint8Array, options?: RequestOptions): Promise<Message> {
     validateUserRef(target, "target");
     if (body.length === 0) {
@@ -362,6 +558,18 @@ export class HTTPClient {
     return messageFromHTTP(response);
   }
 
+  /**
+   * 发送瞬时数据包（中继消息）。
+   * 数据包不会被持久化，适用于实时消息推送场景。
+   *
+   * @param token - 认证令牌
+   * @param targetNodeId - 目标节点 ID（必须与 relayTarget.nodeId 一致）
+   * @param relayTarget - 接收者的用户引用
+   * @param body - 数据包体字节数据
+   * @param mode - 投递模式
+   * @param options - 可选的请求配置
+   * @throws 如果 targetNodeId 与 relayTarget.nodeId 不匹配或 body 为空则抛出错误
+   */
   async postPacket(
     token: string,
     targetNodeId: string,
@@ -394,11 +602,26 @@ export class HTTPClient {
     );
   }
 
+  /**
+   * 列出集群中的所有节点。
+   *
+   * @param token - 认证令牌
+   * @param options - 可选的请求配置
+   * @returns 集群节点对象数组
+   */
   async listClusterNodes(token: string, options?: RequestOptions): Promise<ClusterNode[]> {
     const response = await this.doJSON("GET", "/cluster/nodes", token, undefined, [200], options);
     return itemsField(response, ["nodes", "items"]).map(clusterNodeFromHTTP);
   }
 
+  /**
+   * 列出指定节点上当前已登录的用户。
+   *
+   * @param token - 认证令牌
+   * @param nodeId - 节点 ID
+   * @param options - 可选的请求配置
+   * @returns 已登录用户对象数组
+   */
   async listNodeLoggedInUsers(token: string, nodeId: string, options?: RequestOptions): Promise<LoggedInUser[]> {
     toRequiredWireInteger(nodeId, "nodeId");
     const response = await this.doJSON(
@@ -412,21 +635,59 @@ export class HTTPClient {
     return itemsField(response, ["items"]).map(loggedInUserFromHTTP);
   }
 
+  /**
+   * 屏蔽（拉黑）用户。
+   *
+   * @param token - 认证令牌
+   * @param owner - 执行屏蔽操作的用户引用
+   * @param blocked - 被屏蔽的用户引用
+   * @param options - 可选的请求配置
+   * @returns 黑名单条目对象
+   */
   async blockUser(token: string, owner: UserRef, blocked: UserRef, options?: RequestOptions): Promise<BlacklistEntry> {
     const attachment = await this.upsertAttachment(token, owner, blocked, AttachmentType.UserBlacklist, new Uint8Array(0), options);
     return blacklistEntryFromAttachment(attachment);
   }
 
+  /**
+   * 取消屏蔽（解除拉黑）用户。
+   *
+   * @param token - 认证令牌
+   * @param owner - 执行解除屏蔽操作的用户引用
+   * @param blocked - 被解除屏蔽的用户引用
+   * @param options - 可选的请求配置
+   * @returns 被删除的黑名单条目对象
+   */
   async unblockUser(token: string, owner: UserRef, blocked: UserRef, options?: RequestOptions): Promise<BlacklistEntry> {
     const attachment = await this.deleteAttachment(token, owner, blocked, AttachmentType.UserBlacklist, options);
     return blacklistEntryFromAttachment(attachment);
   }
 
+  /**
+   * 列出用户的黑名单列表。
+   *
+   * @param token - 认证令牌
+   * @param owner - 要查询黑名单的用户引用
+   * @param options - 可选的请求配置
+   * @returns 黑名单条目对象数组
+   */
   async listBlockedUsers(token: string, owner: UserRef, options?: RequestOptions): Promise<BlacklistEntry[]> {
     const items = await this.listAttachments(token, owner, AttachmentType.UserBlacklist, options);
     return items.map(blacklistEntryFromAttachment);
   }
 
+  /**
+   * 插入或更新附件关系。
+   * 附件用于管理用户之间的关联关系（如频道订阅、管理员、黑名单等）。
+   *
+   * @param token - 认证令牌
+   * @param owner - 附件所有者（关系主体）
+   * @param subject - 附件目标（关系客体）
+   * @param attachmentType - 附件类型
+   * @param configJson - 附件配置的 JSON 字节数据（可选，默认空对象）
+   * @param options - 可选的请求配置
+   * @returns 附件对象
+   */
   async upsertAttachment(
     token: string,
     owner: UserRef,
@@ -450,6 +711,16 @@ export class HTTPClient {
     return attachmentFromHTTP(response);
   }
 
+  /**
+   * 删除附件关系。
+   *
+   * @param token - 认证令牌
+   * @param owner - 附件所有者
+   * @param subject - 附件目标
+   * @param attachmentType - 附件类型
+   * @param options - 可选的请求配置
+   * @returns 被删除的附件对象
+   */
   async deleteAttachment(
     token: string,
     owner: UserRef,
@@ -470,6 +741,16 @@ export class HTTPClient {
     return attachmentFromHTTP(response);
   }
 
+  /**
+   * 列出附件关系。
+   * 可按附件类型过滤。
+   *
+   * @param token - 认证令牌
+   * @param owner - 附件所有者
+   * @param attachmentType - 可选的附件类型过滤条件
+   * @param options - 可选的请求配置
+   * @returns 附件对象数组
+   */
   async listAttachments(token: string, owner: UserRef, attachmentType?: AttachmentType, options?: RequestOptions): Promise<Attachment[]> {
     validateUserRef(owner, "owner");
     const query = attachmentType ? `?attachment_type=${encodeURIComponent(attachmentType)}` : "";
@@ -484,6 +765,15 @@ export class HTTPClient {
     return itemsField(response, ["items"]).map(attachmentFromHTTP);
   }
 
+  /**
+   * 列出集群事件（事件溯源）。
+   *
+   * @param token - 认证令牌
+   * @param after - 从指定序列号之后开始查询，默认 "0"（从头开始）
+   * @param limit - 返回的最大事件数量（0 表示不限制）
+   * @param options - 可选的请求配置
+   * @returns 事件对象数组
+   */
   async listEvents(token: string, after = "0", limit = 0, options?: RequestOptions): Promise<Event[]> {
     toWireInteger(after, "after");
     validateLimit(limit, "limit");
@@ -501,11 +791,26 @@ export class HTTPClient {
     return itemsField(response, ["items"]).map(eventFromHTTP);
   }
 
+  /**
+   * 获取节点操作状态。
+   * 返回包含消息窗口、事件序列、冲突统计和对等节点状态等信息。
+   *
+   * @param token - 认证令牌
+   * @param options - 可选的请求配置
+   * @returns 节点操作状态对象
+   */
   async operationsStatus(token: string, options?: RequestOptions): Promise<OperationsStatus> {
     const response = await this.doJSON("GET", "/ops/status", token, undefined, [200], options);
     return operationsStatusFromHTTP(response);
   }
 
+  /**
+   * 获取 Prometheus 格式的监控指标。
+   *
+   * @param token - 认证令牌
+   * @param options - 可选的请求配置
+   * @returns Prometheus 格式的指标文本
+   */
   async metrics(token: string, options?: RequestOptions): Promise<string> {
     return this.doText("GET", "/metrics", token, [200], options);
   }

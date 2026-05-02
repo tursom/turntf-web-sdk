@@ -12,12 +12,28 @@ const unsignedDecimalPattern = /^(0|[1-9][0-9]*)$/;
 const userMetadataKeyMaxLength = 128;
 const userMetadataScanLimitMax = 1000;
 
+/**
+ * 断言字符串为非负整数的十进制表示。
+ * 只允许数字字符（0-9），不能有前导零（但允许单独的 "0"）。
+ *
+ * @param value - 待验证的字符串
+ * @param field - 字段名称，用于错误消息
+ * @throws 如果值不符合十进制数字格式则抛出错误
+ */
 export function assertDecimalString(value: string, field: string): void {
   if (!unsignedDecimalPattern.test(value)) {
     throw new Error(`${field} must be a decimal string`);
   }
 }
 
+/**
+ * 断言字符串为非零的非负整数十进制表示。
+ * 相比 {@link assertDecimalString}，额外要求值不能为 "0"。
+ *
+ * @param value - 待验证的字符串
+ * @param field - 字段名称，用于错误消息
+ * @throws 如果值不是十进制数字或为 "0" 则抛出错误
+ */
 export function assertRequiredDecimalString(value: string, field: string): void {
   assertDecimalString(value, field);
   if (value === "0") {
@@ -25,17 +41,42 @@ export function assertRequiredDecimalString(value: string, field: string): void 
   }
 }
 
+/**
+ * 验证 UserRef 对象的合法性。
+ * 确保 nodeId 和 userId 均为有效的非零十进制数字字符串。
+ *
+ * @param ref - 用户引用对象
+ * @param field - 字段名称前缀，用于错误消息，默认为 "user"
+ * @throws 如果引用无效则抛出错误
+ */
 export function validateUserRef(ref: UserRef, field = "user"): void {
   assertRequiredDecimalString(ref.nodeId, `${field}.nodeId`);
   assertRequiredDecimalString(ref.userId, `${field}.userId`);
 }
 
+/**
+ * 验证登录名不能为空字符串。
+ *
+ * @param value - 登录名字符串
+ * @param field - 字段名称，用于错误消息，默认为 "loginName"
+ * @throws 如果登录名为空则抛出错误
+ */
 export function validateLoginName(value: string, field = "loginName"): void {
   if (value === "") {
     throw new Error(`${field} is required`);
   }
 }
 
+/**
+ * 验证凭据对象的合法性。
+ * 凭据必须是以下两种形式之一（互斥）：
+ * 1. 包含 loginName 的登录名形式
+ * 2. 包含 nodeId 和 userId 的用户引用形式
+ *
+ * @param credentials - 凭据对象
+ * @param field - 字段名称前缀，用于错误消息，默认为 "credentials"
+ * @throws 如果凭据格式无效则抛出错误
+ */
 export function validateCredentials(credentials: Credentials, field = "credentials"): void {
   const hasLoginName = "loginName" in credentials;
   const hasNodeId = "nodeId" in credentials;
@@ -55,6 +96,14 @@ export function validateCredentials(credentials: Credentials, field = "credentia
   validateUserRef(credentials, field);
 }
 
+/**
+ * 验证 SessionRef 对象的合法性。
+ * 确保 servingNodeId 为非零十进制数字字符串，且 sessionId 不为空。
+ *
+ * @param ref - 会话引用对象
+ * @param field - 字段名称前缀，用于错误消息，默认为 "session"
+ * @throws 如果会话引用无效则抛出错误
+ */
 export function validateSessionRef(ref: SessionRef, field = "session"): void {
   assertRequiredDecimalString(ref.servingNodeId, `${field}.servingNodeId`);
   if (ref.sessionId === "") {
@@ -62,16 +111,40 @@ export function validateSessionRef(ref: SessionRef, field = "session"): void {
   }
 }
 
+/**
+ * 验证投递模式是否合法。
+ * 合法的模式为 {@link DeliveryMode.BestEffort} 或 {@link DeliveryMode.RouteRetry}。
+ *
+ * @param mode - 投递模式
+ * @throws 如果模式不合法则抛出错误
+ */
 export function validateDeliveryMode(mode: DeliveryMode): void {
   if (mode !== DeliveryMode.BestEffort && mode !== DeliveryMode.RouteRetry) {
     throw new Error(`invalid deliveryMode ${JSON.stringify(mode)}`);
   }
 }
 
+/**
+ * 验证用户元数据的键值是否合法。
+ * 键值只能包含字母、数字和特殊字符（. _ : -），且长度不超过128个字符。
+ *
+ * @param key - 元数据键值
+ * @param field - 字段名称，用于错误消息，默认为 "key"
+ * @throws 如果键值无效则抛出错误
+ */
 export function validateUserMetadataKey(key: string, field = "key"): void {
   validateUserMetadataKeyFragment(key, field, false);
 }
 
+/**
+ * 验证扫描用户元数据的请求参数。
+ * 确保 prefix、after 符合键值格式，limit 在合法范围内，
+ * 且 after 起始于 prefix（当两者同时提供时）。
+ *
+ * @param request - 扫描元数据请求
+ * @param field - 字段名称前缀，用于错误消息，默认为 "request"
+ * @throws 如果请求参数无效则抛出错误
+ */
 export function validateUserMetadataScanRequest(request: ScanUserMetadataRequest, field = "request"): void {
   const prefix = request.prefix ?? "";
   const after = request.after ?? "";
@@ -87,20 +160,58 @@ export function validateUserMetadataScanRequest(request: ScanUserMetadataRequest
   }
 }
 
+/**
+ * 从消息对象中提取游标信息。
+ * 游标包含消息所在节点的 nodeId 和消息的序列号 seq。
+ *
+ * @param message - 消息对象
+ * @returns 包含 nodeId 和 seq 的消息游标
+ */
 export function cursorForMessage(message: Message): MessageCursor {
   return { nodeId: message.nodeId, seq: message.seq };
 }
 
+/**
+ * 将十进制数字字符串转换为 BigInt。
+ * 先验证字符串格式，再进行转换。
+ *
+ * @param value - 十进制数字字符串
+ * @param field - 字段名称，用于错误消息
+ * @returns BigInt 类型的值
+ * @throws 如果字符串不是有效的十进制数字则抛出错误
+ */
 export function toWireInteger(value: string, field: string): bigint {
   assertDecimalString(value, field);
   return BigInt(value);
 }
 
+/**
+ * 将必填的十进制数字字符串转换为 BigInt。
+ * 要求值不能为 "0"，验证后转换为 BigInt。
+ *
+ * @param value - 十进制数字字符串
+ * @param field - 字段名称，用于错误消息
+ * @returns BigInt 类型的值
+ * @throws 如果字符串不是有效的十进制数字或为 "0" 则抛出错误
+ */
 export function toRequiredWireInteger(value: string, field: string): bigint {
   assertRequiredDecimalString(value, field);
   return BigInt(value);
 }
 
+/**
+ * 将各种类型的 ID 值统一转换为字符串。
+ * 支持 string、bigint、number 类型，null/undefined 转换为 "0"。
+ *
+ * @param value - ID 值
+ * @returns 字符串形式的 ID
+ * @throws 如果传入的是非整数的 number 值则抛出错误
+ *
+ * @example
+ * idToString("123")      // "123"
+ * idToString(BigInt(5))  // "5"
+ * idToString(null)       // "0"
+ */
 export function idToString(value: unknown): string {
   if (typeof value === "string") {
     return value;
