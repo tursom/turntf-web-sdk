@@ -23,7 +23,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "gen:proto": "protoc -I proto --ts_out src/generated --ts_opt long_type_string proto/client.proto && node scripts/postprocess-generated.mjs",
+    "gen:proto": "protoc -I proto --ts_out src/generated --ts_opt long_type_string proto/client.proto proto/relay.proto && node scripts/postprocess-generated.mjs",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
     "prepare": "npm run build",

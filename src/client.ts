@@ -69,6 +69,7 @@ import type {
   UserRef
 } from "./types";
 import { abortReason, createDeferred, ensureConnectionError, mergeAbortSignals, sleep, type Deferred } from "./utils";
+import { Relay } from "./relay";
 import {
   cursorForMessage,
   toRequiredWireInteger,
@@ -246,6 +247,7 @@ export class Client {
   private connected = false;
   private closed = false;
   private stopReconnect = false;
+  private _relay: Relay | undefined;
 
   /**
    * 创建一个 Client 实例。
@@ -305,6 +307,19 @@ export class Client {
       return undefined;
     }
     return { ...this.currentSessionRef };
+  }
+
+  /**
+   * 获取或创建与当前客户端关联的 Relay 连接管理器。
+   * relay 管理器提供点对点数据传输通道，支持可靠和尽力而为两种模式。
+   *
+   * @returns Relay 管理器实例
+   */
+  relay(): Relay {
+    if (this._relay == null) {
+      this._relay = new Relay(this);
+    }
+    return this._relay;
   }
 
   /**
@@ -1451,9 +1466,13 @@ export class Client {
         await this.persistAndDispatchMessage(message);
         return;
       }
-      case "packetPushed":
-        await this.safeHandlerCall(this.handler.onPacket, packetFromProto(env.body.packetPushed.packet));
+      case "packetPushed": {
+        const packet = packetFromProto(env.body.packetPushed.packet);
+        if (this._relay == null || !this._relay.handlePacket(packet)) {
+          await this.safeHandlerCall(this.handler.onPacket, packet);
+        }
         return;
+      }
       case "sendMessageResponse":
         await this.handleSendMessageResponse(env.body.sendMessageResponse);
         return;

@@ -611,3 +611,161 @@ export interface SendPacketOptions extends RequestOptions {
   /** 可选的目标会话引用 */
   targetSession?: SessionRef;
 }
+
+// ---------------------------------------------------------------------------
+// Relay（点对点传输层）类型定义
+// ---------------------------------------------------------------------------
+
+/**
+ * 可靠性常量。
+ * - BestEffort: 0 - 尽力而为，无 ACK 无重传。延迟最低，适合实时音视频帧。
+ * - AtLeastOnce: 1 - 至少一次，有 ACK 和重传，不保证去重和排序。适合幂等指令。
+ * - ReliableOrdered: 2 - 可靠有序，有 ACK、重传、去重和严格有序。适合文件传输和聊天消息。
+ */
+export const Reliability = {
+  BestEffort: 0,
+  AtLeastOnce: 1,
+  ReliableOrdered: 2
+} as const;
+
+/**
+ * 可靠性类型。
+ * 可选值：0（尽力而为）、1（至少一次）、2（可靠有序）。
+ */
+export type Reliability = (typeof Reliability)[keyof typeof Reliability];
+
+/**
+ * Relay 连接状态常量。
+ * - Closed: 0 - 已关闭
+ * - Opening: 1 - 正在打开
+ * - Open: 2 - 已建立
+ * - Closing: 3 - 正在关闭
+ */
+export const RelayState = {
+  Closed: 0,
+  Opening: 1,
+  Open: 2,
+  Closing: 3
+} as const;
+
+/**
+ * Relay 连接状态类型。
+ * 可选值：0（已关闭）、1（正在打开）、2（已建立）、3（正在关闭）。
+ */
+export type RelayState = (typeof RelayState)[keyof typeof RelayState];
+
+/**
+ * Relay 协议帧类型常量。
+ * - Unspecified: 0 - 未指定
+ * - Open: 1 - 打开连接
+ * - OpenAck: 2 - 打开确认
+ * - Data: 3 - 数据帧
+ * - Ack: 4 - 确认帧
+ * - Close: 5 - 关闭连接
+ * - Ping: 6 - 心跳
+ * - Error: 7 - 错误
+ */
+export const RelayKind = {
+  Unspecified: 0,
+  Open: 1,
+  OpenAck: 2,
+  Data: 3,
+  Ack: 4,
+  Close: 5,
+  Ping: 6,
+  Error: 7
+} as const;
+
+/**
+ * Relay 协议帧类型。
+ * 可选值：0（未指定）到 7（错误）。
+ */
+export type RelayKind = (typeof RelayKind)[keyof typeof RelayKind];
+
+/**
+ * Relay 连接配置。
+ * 所有字段均为可选，未设置时使用 {@link defaultRelayConfig} 的默认值。
+ */
+export interface RelayConfig {
+  /** 可靠性等级，默认 ReliableOrdered（2） */
+  reliability?: Reliability;
+  /** 发送窗口大小（在途未确认帧数上限），范围 1-256，默认 16 */
+  windowSize?: number;
+  /** OPEN 等待 OPEN_ACK 超时毫秒数，默认 10000 */
+  openTimeoutMs?: number;
+  /** CLOSE 等待确认超时毫秒数，默认 5000 */
+  closeTimeoutMs?: number;
+  /** DATA 等待 ACK 超时毫秒数，默认 3000。BestEffort 模式下忽略 */
+  ackTimeoutMs?: number;
+  /** 最大重传次数，默认 5。BestEffort 模式下忽略 */
+  maxRetransmits?: number;
+  /** 无数据超时断开毫秒数，0 表示不超时 */
+  idleTimeoutMs?: number;
+  /** 发送缓冲区字节数，默认 65536 */
+  sendBufferSize?: number;
+  /** Packet 投递模式，默认 route_retry */
+  deliveryMode?: DeliveryMode;
+  /** Send 操作超时毫秒数，0 表示不超时 */
+  sendTimeoutMs?: number;
+  /** Receive 操作超时毫秒数，0 表示不超时 */
+  receiveTimeoutMs?: number;
+}
+
+/**
+ * 返回带默认值的 RelayConfig。
+ */
+export function defaultRelayConfig(): RelayConfig {
+  return {
+    reliability: Reliability.ReliableOrdered,
+    windowSize: 16,
+    openTimeoutMs: 10000,
+    closeTimeoutMs: 5000,
+    ackTimeoutMs: 3000,
+    maxRetransmits: 5,
+    sendBufferSize: 65536,
+    deliveryMode: DeliveryMode.RouteRetry,
+    sendTimeoutMs: 0,
+    receiveTimeoutMs: 0
+  };
+}
+
+/**
+ * Relay 错误码常量。
+ */
+export const RelayErrorCodes = {
+  /** OPEN 超时 */
+  OpenTimeout: "open_timeout",
+  /** ACK 超时 */
+  AckTimeout: "ack_timeout",
+  /** 超过最大重传次数 */
+  MaxRetransmit: "max_retransmit",
+  /** 空闲超时 */
+  IdleTimeout: "idle_timeout",
+  /** 远端关闭 */
+  RemoteClose: "remote_close",
+  /** 客户端关闭 */
+  ClientClosed: "client_closed",
+  /** 协议错误 */
+  Protocol: "protocol_error",
+  /** 重复的 OPEN 帧 */
+  DuplicateOpen: "duplicate_open",
+  /** 未连接 */
+  NotConnected: "not_connected",
+  /** Send 超时 */
+  SendTimeout: "send_timeout",
+  /** Receive 超时 */
+  ReceiveTimeout: "receive_timeout"
+} as const;
+
+/**
+ * Relay 层错误。
+ */
+export class RelayError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(`relay: ${code}: ${message}`);
+    this.name = "RelayError";
+    this.code = code;
+  }
+}
