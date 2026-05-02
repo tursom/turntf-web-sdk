@@ -68,6 +68,7 @@ export interface HTTPClientOptions {
 export class HTTPClient {
   /** 服务器基础 URL */
   readonly baseUrl: string;
+  private fetchImpl: typeof globalThis.fetch;
 
   /**
    * 创建一个 HTTPClient 实例。
@@ -512,13 +513,23 @@ export class HTTPClient {
    * @param token - 认证令牌
    * @param target - 目标用户引用
    * @param limit - 返回的最大消息数量（0 表示不限制）
+   * @param peerNodeId - 可选，会话对方 node_id（与 peerUserId 同时提供时启用 session 查询）
+   * @param peerUserId - 可选，会话对方 user_id
    * @param options - 可选的请求配置
    * @returns 消息对象数组
    */
-  async listMessages(token: string, target: UserRef, limit = 0, options?: RequestOptions): Promise<Message[]> {
-    validateUserRef(target, "target");
+  async listMessages(token: string, target: UserRef, limit = 0, peerNodeId?: string, peerUserId?: string, options?: RequestOptions): Promise<Message[]> {
+    if (target.nodeId !== "0" || target.userId !== "0") {
+      validateUserRef(target, "target");
+    }
     validateLimit(limit, "limit");
-    const query = limit > 0 ? `?limit=${encodeURIComponent(String(limit))}` : "";
+    const params: string[] = [];
+    if (limit > 0) params.push(`limit=${encodeURIComponent(String(limit))}`);
+    if (peerNodeId !== undefined && peerUserId !== undefined) {
+      params.push(`peer_node_id=${encodeURIComponent(peerNodeId)}`);
+      params.push(`peer_user_id=${encodeURIComponent(peerUserId)}`);
+    }
+    const query = params.length > 0 ? `?${params.join("&")}` : "";
     const response = await this.doJSON(
       "GET",
       `/nodes/${target.nodeId}/users/${target.userId}/messages${query}`,
