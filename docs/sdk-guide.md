@@ -56,11 +56,19 @@ const user = await client.getUser(token, {
   userId: "1025"
 });
 
+// 列出当前用户可通讯的活跃用户
+const peers = await client.listUsers(token, {
+  name: "ali",
+  uid: { nodeId: "4096", userId: "1025" }
+});
+
 // 更新用户
 await client.updateUser(token, { nodeId: "4096", userId: "1025" }, {
   username: "alice_new",
   loginName: ""   // 传空串表示解绑登录名；不传表示保持不变
 });
+
+console.log(peers[0]?.loginName); // 普通用户看到他人时，这里可能是空字符串
 ```
 
 ### 消息管理
@@ -291,6 +299,11 @@ const user = await client.createUser({
   loginName: "bob-login",
   password: plainPasswordSync("bob-password"),
   role: "user"
+});
+
+// 查询当前用户可通讯的活跃用户
+const peers = await client.listUsers({
+  name: "bob"
 });
 
 // 查询集群节点

@@ -150,6 +150,12 @@ export interface ClientEnvelope {
          */
         scanUserMetadata: ScanUserMetadataRequest;
     } | {
+        oneofKind: "listUsers";
+        /**
+         * @generated from protobuf field: notifier.client.v1.ListUsersRequest list_users = 23
+         */
+        listUsers: ListUsersRequest;
+    } | {
         oneofKind: undefined;
     };
 }
@@ -304,6 +310,12 @@ export interface ServerEnvelope {
          * @generated from protobuf field: notifier.client.v1.ScanUserMetadataResponse scan_user_metadata_response = 24
          */
         scanUserMetadataResponse: ScanUserMetadataResponse;
+    } | {
+        oneofKind: "listUsersResponse";
+        /**
+         * @generated from protobuf field: notifier.client.v1.ListUsersResponse list_users_response = 25
+         */
+        listUsersResponse: ListUsersResponse;
     } | {
         oneofKind: undefined;
     };
@@ -590,6 +602,25 @@ export interface DeleteUserRequest {
     user?: UserRef;
 }
 /**
+ * @generated from protobuf message notifier.client.v1.ListUsersRequest
+ */
+export interface ListUsersRequest {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: string name = 2
+     */
+    name: string;
+    /**
+     * uid 为空（未设置或 node_id/user_id 都为 0）时，表示不按 uid 过滤。
+     *
+     * @generated from protobuf field: notifier.client.v1.UserRef uid = 3
+     */
+    uid?: UserRef;
+}
+/**
  * @generated from protobuf message notifier.client.v1.ListMessagesRequest
  */
 export interface ListMessagesRequest {
@@ -759,6 +790,23 @@ export interface DeleteUserResponse {
      * @generated from protobuf field: notifier.client.v1.UserRef user = 3
      */
     user?: UserRef;
+}
+/**
+ * @generated from protobuf message notifier.client.v1.ListUsersResponse
+ */
+export interface ListUsersResponse {
+    /**
+     * @generated from protobuf field: uint64 request_id = 1
+     */
+    requestId: string;
+    /**
+     * @generated from protobuf field: repeated notifier.client.v1.User items = 2
+     */
+    items: User[];
+    /**
+     * @generated from protobuf field: int32 count = 3
+     */
+    count: number;
 }
 /**
  * @generated from protobuf message notifier.client.v1.ListMessagesResponse
@@ -1763,7 +1811,8 @@ class ClientEnvelope$Type extends MessageType<ClientEnvelope> {
             { no: 19, name: "get_user_metadata", kind: "message", oneof: "body", T: () => GetUserMetadataRequest },
             { no: 20, name: "upsert_user_metadata", kind: "message", oneof: "body", T: () => UpsertUserMetadataRequest },
             { no: 21, name: "delete_user_metadata", kind: "message", oneof: "body", T: () => DeleteUserMetadataRequest },
-            { no: 22, name: "scan_user_metadata", kind: "message", oneof: "body", T: () => ScanUserMetadataRequest }
+            { no: 22, name: "scan_user_metadata", kind: "message", oneof: "body", T: () => ScanUserMetadataRequest },
+            { no: 23, name: "list_users", kind: "message", oneof: "body", T: () => ListUsersRequest }
         ]);
     }
     override create(value?: PartialMessage<ClientEnvelope>): ClientEnvelope {
@@ -1910,6 +1959,12 @@ class ClientEnvelope$Type extends MessageType<ClientEnvelope> {
                         scanUserMetadata: ScanUserMetadataRequest.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).scanUserMetadata)
                     };
                     break;
+                case /* notifier.client.v1.ListUsersRequest list_users */ 23:
+                    message.body = {
+                        oneofKind: "listUsers",
+                        listUsers: ListUsersRequest.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).listUsers)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1988,6 +2043,9 @@ class ClientEnvelope$Type extends MessageType<ClientEnvelope> {
         /* notifier.client.v1.ScanUserMetadataRequest scan_user_metadata = 22; */
         if (message.body.oneofKind === "scanUserMetadata")
             ScanUserMetadataRequest.internalBinaryWrite(message.body.scanUserMetadata, writer.tag(22, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.ListUsersRequest list_users = 23; */
+        if (message.body.oneofKind === "listUsers")
+            ListUsersRequest.internalBinaryWrite(message.body.listUsers, writer.tag(23, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -2025,7 +2083,8 @@ class ServerEnvelope$Type extends MessageType<ServerEnvelope> {
             { no: 21, name: "get_user_metadata_response", kind: "message", oneof: "body", T: () => GetUserMetadataResponse },
             { no: 22, name: "upsert_user_metadata_response", kind: "message", oneof: "body", T: () => UpsertUserMetadataResponse },
             { no: 23, name: "delete_user_metadata_response", kind: "message", oneof: "body", T: () => DeleteUserMetadataResponse },
-            { no: 24, name: "scan_user_metadata_response", kind: "message", oneof: "body", T: () => ScanUserMetadataResponse }
+            { no: 24, name: "scan_user_metadata_response", kind: "message", oneof: "body", T: () => ScanUserMetadataResponse },
+            { no: 25, name: "list_users_response", kind: "message", oneof: "body", T: () => ListUsersResponse }
         ]);
     }
     override create(value?: PartialMessage<ServerEnvelope>): ServerEnvelope {
@@ -2184,6 +2243,12 @@ class ServerEnvelope$Type extends MessageType<ServerEnvelope> {
                         scanUserMetadataResponse: ScanUserMetadataResponse.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).scanUserMetadataResponse)
                     };
                     break;
+                case /* notifier.client.v1.ListUsersResponse list_users_response */ 25:
+                    message.body = {
+                        oneofKind: "listUsersResponse",
+                        listUsersResponse: ListUsersResponse.internalBinaryRead(reader, reader.uint32(), options, (message.body as any).listUsersResponse)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -2268,6 +2333,9 @@ class ServerEnvelope$Type extends MessageType<ServerEnvelope> {
         /* notifier.client.v1.ScanUserMetadataResponse scan_user_metadata_response = 24; */
         if (message.body.oneofKind === "scanUserMetadataResponse")
             ScanUserMetadataResponse.internalBinaryWrite(message.body.scanUserMetadataResponse, writer.tag(24, WireType.LengthDelimited).fork(), options).join();
+        /* notifier.client.v1.ListUsersResponse list_users_response = 25; */
+        if (message.body.oneofKind === "listUsersResponse")
+            ListUsersResponse.internalBinaryWrite(message.body.listUsersResponse, writer.tag(25, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -3243,6 +3311,68 @@ class DeleteUserRequest$Type extends MessageType<DeleteUserRequest> {
  */
 export const DeleteUserRequest = new DeleteUserRequest$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class ListUsersRequest$Type extends MessageType<ListUsersRequest> {
+    constructor() {
+        super("notifier.client.v1.ListUsersRequest", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 3, name: "uid", kind: "message", T: () => UserRef }
+        ]);
+    }
+    override create(value?: PartialMessage<ListUsersRequest>): ListUsersRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        message.name = "";
+        if (value !== undefined)
+            reflectionMergePartial<ListUsersRequest>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ListUsersRequest): ListUsersRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* string name */ 2:
+                    message.name = reader.string();
+                    break;
+                case /* notifier.client.v1.UserRef uid */ 3:
+                    message.uid = UserRef.internalBinaryRead(reader, reader.uint32(), options, message.uid);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: ListUsersRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* string name = 2; */
+        if (message.name !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.name);
+        /* notifier.client.v1.UserRef uid = 3; */
+        if (message.uid)
+            UserRef.internalBinaryWrite(message.uid, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.ListUsersRequest
+ */
+export const ListUsersRequest = new ListUsersRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ListMessagesRequest$Type extends MessageType<ListMessagesRequest> {
     constructor() {
         super("notifier.client.v1.ListMessagesRequest", [
@@ -3893,6 +4023,69 @@ class DeleteUserResponse$Type extends MessageType<DeleteUserResponse> {
  * @generated MessageType for protobuf message notifier.client.v1.DeleteUserResponse
  */
 export const DeleteUserResponse = new DeleteUserResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ListUsersResponse$Type extends MessageType<ListUsersResponse> {
+    constructor() {
+        super("notifier.client.v1.ListUsersResponse", [
+            { no: 1, name: "request_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/ },
+            { no: 2, name: "items", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => User },
+            { no: 3, name: "count", kind: "scalar", T: 5 /*ScalarType.INT32*/ }
+        ]);
+    }
+    override create(value?: PartialMessage<ListUsersResponse>): ListUsersResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.requestId = "0";
+        message.items = [];
+        message.count = 0;
+        if (value !== undefined)
+            reflectionMergePartial<ListUsersResponse>(this, message, value);
+        return message;
+    }
+    override internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ListUsersResponse): ListUsersResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 request_id */ 1:
+                    message.requestId = reader.uint64().toString();
+                    break;
+                case /* repeated notifier.client.v1.User items */ 2:
+                    message.items.push(User.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* int32 count */ 3:
+                    message.count = reader.int32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    override internalBinaryWrite(message: ListUsersResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 request_id = 1; */
+        if (message.requestId !== "0")
+            writer.tag(1, WireType.Varint).uint64(message.requestId);
+        /* repeated notifier.client.v1.User items = 2; */
+        for (let i = 0; i < message.items.length; i++)
+            User.internalBinaryWrite(message.items[i]!, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* int32 count = 3; */
+        if (message.count !== 0)
+            writer.tag(3, WireType.Varint).int32(message.count);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message notifier.client.v1.ListUsersResponse
+ */
+export const ListUsersResponse = new ListUsersResponse$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class ListMessagesResponse$Type extends MessageType<ListMessagesResponse> {
     constructor() {

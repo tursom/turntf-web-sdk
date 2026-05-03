@@ -9,6 +9,7 @@ import {
   type DeleteUserResult,
   DeliveryMode,
   type Event,
+  type ListUsersRequest,
   type LoggedInUser,
   type Message,
   type OperationsStatus,
@@ -37,10 +38,12 @@ import {
 } from "./utils";
 import {
   idToString,
+  isZeroUserRef,
   toRequiredWireInteger,
   toWireInteger,
   validateDeliveryMode,
   validateLoginName,
+  validateListUsersRequest,
   validateUserMetadataKey,
   validateUserMetadataScanRequest,
   validateUserRef
@@ -253,6 +256,34 @@ export class HTTPClient {
       options
     );
     return userFromHTTP(response);
+  }
+
+  /**
+   * 获取当前用户可通讯的活跃用户列表。
+   * 支持按名称子串和用户唯一标识过滤。
+   *
+   * @param token - 认证令牌
+   * @param request - 可选过滤条件
+   * @param options - 可选的请求配置
+   * @returns 用户列表
+   */
+  async listUsers(token: string, request: ListUsersRequest = {}, options?: RequestOptions): Promise<User[]> {
+    validateListUsersRequest(request, "request");
+
+    const params = new URLSearchParams();
+    const name = normalizeListUsersName(request.name);
+    if (name !== undefined) {
+      params.set("name", name);
+    }
+    const uid = uidFilterToHTTP(request.uid);
+    if (uid !== undefined) {
+      params.set("uid", uid);
+    }
+    const suffix = params.size === 0 ? "" : `?${params.toString()}`;
+
+    const response = await this.doJSON("GET", `/users${suffix}`, token, undefined, [200], options);
+    const items = Array.isArray(response) ? response : itemsField(response, ["items"]);
+    return items.map(userFromHTTP);
   }
 
   /**
@@ -914,6 +945,21 @@ function validateLimit(value: number, field: string): void {
   if (!Number.isInteger(value) || value < 0) {
     throw new Error(`${field} must be a non-negative integer`);
   }
+}
+
+function normalizeListUsersName(name: string | undefined): string | undefined {
+  if (name == null) {
+    return undefined;
+  }
+  const normalized = name.trim();
+  return normalized === "" ? undefined : normalized;
+}
+
+function uidFilterToHTTP(uid: UserRef | undefined): string | undefined {
+  if (uid == null || isZeroUserRef(uid)) {
+    return undefined;
+  }
+  return `${uid.nodeId}:${uid.userId}`;
 }
 
 function bindDefaultFetch(): typeof fetch | undefined {

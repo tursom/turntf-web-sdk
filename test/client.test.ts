@@ -1077,6 +1077,76 @@ describe("Client", () => {
       await server.close();
     }
   });
+
+  it("lists communicable users over websocket and validates uid filters", async () => {
+    const server = await TestServer.start();
+    const client = new Client({
+      baseUrl: server.baseUrl(),
+      credentials: {
+        nodeId: "4096",
+        userId: "1025",
+        password: plainPasswordSync("alice-password")
+      },
+      requestTimeoutMs: 200,
+      pingIntervalMs: 60_000
+    });
+
+    try {
+      const connectPromise = client.connect();
+      const conn = await server.nextConnection();
+      await conn.readClientEnvelope();
+      await conn.sendServerEnvelope(loginResponseEnvelope("session-alice"));
+      await connectPromise;
+
+      const filteredPromise = client.listUsers({
+        name: "  alice  ",
+        uid: { nodeId: "4096", userId: "1025" }
+      });
+      const filteredReq = await conn.readClientEnvelope();
+      const filteredBody = clientBody(filteredReq, "listUsers");
+      expect(filteredBody.listUsers.name).toBe("alice");
+      expect(filteredBody.listUsers.uid).toEqual({ nodeId: "4096", userId: "1025" });
+      await conn.sendServerEnvelope({
+        body: {
+          oneofKind: "listUsersResponse",
+          listUsersResponse: {
+            requestId: filteredBody.listUsers.requestId,
+            items: [userRecord("alice", "user", "alice-login")],
+            count: 1
+          }
+        }
+      });
+      const filtered = await filteredPromise;
+      expect(filtered[0]?.loginName).toBe("alice-login");
+
+      const unfilteredPromise = client.listUsers({
+        uid: { nodeId: "0", userId: "0" }
+      });
+      const unfilteredReq = await conn.readClientEnvelope();
+      const unfilteredBody = clientBody(unfilteredReq, "listUsers");
+      expect(unfilteredBody.listUsers.name).toBe("");
+      expect(unfilteredBody.listUsers.uid).toEqual({ nodeId: "0", userId: "0" });
+      await conn.sendServerEnvelope({
+        body: {
+          oneofKind: "listUsersResponse",
+          listUsersResponse: {
+            requestId: unfilteredBody.listUsers.requestId,
+            items: [userRecord("bob", "user", "")],
+            count: 1
+          }
+        }
+      });
+      const unfiltered = await unfilteredPromise;
+      expect(unfiltered[0]?.loginName).toBe("");
+
+      await expect(client.listUsers({
+        uid: { nodeId: "4096", userId: "0" }
+      })).rejects.toThrow("request.uid must provide both nodeId and userId together");
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
 });
 
 class RecordingStore extends MemoryCursorStore {

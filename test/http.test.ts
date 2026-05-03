@@ -625,6 +625,90 @@ describe("HTTPClient", () => {
     expect(JSON.parse(bodyText)).toEqual({ config_json: {} });
     expect(new TextDecoder().decode(attachment.configJson)).toBe("{\"priority\":1}");
   });
+
+  it("lists communicable users with name and uid filters", async () => {
+    const calls: Array<{ method: string; path: string }> = [];
+    const client = new HTTPClient("http://127.0.0.1:8080", {
+      fetch: async (input, init) => {
+        const method = init?.method ?? "GET";
+        const url = typeof input === "string"
+          ? new URL(input)
+          : input instanceof URL
+            ? input
+            : new URL(input.url);
+        const path = `${url.pathname}${url.search}`;
+        calls.push({ method, path });
+
+        switch (`${method} ${path}`) {
+          case "GET /users?name=alice&uid=4096%3A1025":
+            return jsonResponse({
+              items: [
+                {
+                  node_id: "4096",
+                  user_id: "1025",
+                  username: "alice",
+                  login_name: "alice-login",
+                  role: "user",
+                  profile: { display_name: "Alice" },
+                  system_reserved: false,
+                  created_at: "2026-04-28T00:00:00Z",
+                  updated_at: "2026-04-28T00:00:00Z",
+                  origin_node_id: "4096"
+                }
+              ],
+              count: 1
+            });
+          case "GET /users":
+            return jsonResponse([
+              {
+                node_id: "4096",
+                user_id: "1026",
+                username: "bob",
+                login_name: "",
+                role: "user",
+                profile: { display_name: "Bob" },
+                system_reserved: false,
+                created_at: "2026-04-28T00:00:00Z",
+                updated_at: "2026-04-28T00:00:00Z",
+                origin_node_id: "4096"
+              }
+            ]);
+          default:
+            throw new Error(`unexpected request: ${method} ${path}`);
+        }
+      }
+    });
+
+    const filtered = await client.listUsers("user-token", {
+      name: "  alice  ",
+      uid: { nodeId: "4096", userId: "1025" }
+    });
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.loginName).toBe("alice-login");
+
+    const all = await client.listUsers("user-token", {
+      uid: { nodeId: "0", userId: "0" }
+    });
+    expect(all).toHaveLength(1);
+    expect(all[0]?.loginName).toBe("");
+
+    expect(calls).toEqual([
+      { method: "GET", path: "/users?name=alice&uid=4096%3A1025" },
+      { method: "GET", path: "/users" }
+    ]);
+  });
+
+  it("rejects half-empty uid filters for listUsers", async () => {
+    const client = new HTTPClient("http://127.0.0.1:8080", {
+      fetch: async () => {
+        throw new Error("fetch should not be called");
+      }
+    });
+
+    await expect(client.listUsers("user-token", {
+      uid: { nodeId: "4096", userId: "0" }
+    })).rejects.toThrow("request.uid must provide both nodeId and userId together");
+  });
 });
 
 function jsonResponse(value: unknown, status = 200): Response {

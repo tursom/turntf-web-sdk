@@ -59,10 +59,16 @@ const user = await client.createUser(token, {
   role: "user"
 });
 
+// 查询当前用户可通讯的活跃用户
+const peers = await client.listUsers(token, {
+  name: "ali",
+  uid: { nodeId: user.nodeId, userId: user.userId }
+});
+
 // 查询目标用户的消息列表
 const target: UserRef = { nodeId: user.nodeId, userId: user.userId };
 const messages = await client.listMessages(token, target, 20);
-console.log("消息数量:", messages.length);
+console.log("匹配用户数:", peers.length, "消息数量:", messages.length);
 ```
 
 浏览器环境中 `bcrypt` 哈希计算是同步的（通过 `plainPasswordSync`），因为异步版本 `plainPassword()` 依赖于 `bcryptjs` 的 `hash` 方法，两者在浏览器中均可使用。
@@ -159,6 +165,7 @@ await client.close();
 | **用户管理** | `createUser()` | 创建用户 |
 | | `createChannel()` | 创建频道（role 默认为 "channel"） |
 | | `getUser()` | 获取用户信息 |
+| | `listUsers()` | 列出当前用户可通讯的活跃用户，支持 `name`/`uid` 过滤 |
 | | `updateUser()` | 更新用户信息（部分更新） |
 | | `deleteUser()` | 删除用户 |
 | **用户元数据** | `getUserMetadata()` | 获取用户元数据 |
@@ -202,6 +209,7 @@ await client.close();
 | **用户管理** | `createUser()` | 创建用户 |
 | | `createChannel()` | 创建频道 |
 | | `getUser()` | 获取用户信息 |
+| | `listUsers()` | 通过 `list_users` RPC 列出当前用户可通讯的活跃用户 |
 | | `updateUser()` | 更新用户信息 |
 | | `deleteUser()` | 删除用户 |
 | **用户元数据** | `getUserMetadata()` | 获取用户元数据 |
@@ -279,7 +287,7 @@ SDK 提供了三种创建 `PasswordInput` 的方式：
 所有 64 位 ID 都以十进制字符串暴露，例如 `nodeId`、`userId`、`seq`、`packetId`。二进制字段统一为 `Uint8Array`。
 
 主要类型：
-- `User`、`LoggedInUser` — 用户信息，均返回 `loginName`
+- `User`、`LoggedInUser` — 用户信息；`User.loginName` 在普通用户列出他人时可能为空字符串
 - `Message` — 持久化消息（包含 `recipient`、`sender`、`body` 等）
 - `Packet` — 瞬时数据包（包含 `deliveryMode`、`targetSession` 等）
 - `RelayAccepted` — 中继确认

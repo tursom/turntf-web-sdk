@@ -92,7 +92,7 @@ export interface User {
   userId: string;
   /** 用户名 */
   username: string;
-  /** 登录名 */
+  /** 登录名。普通用户通过用户列表查看他人时，服务端可能返回空字符串 */
   loginName: string;
   /** 用户角色（如 "user"、"channel"、"admin" 等） */
   role: string;
@@ -555,6 +555,20 @@ export interface UpdateUserRequest {
   role?: string;
   /** 新的登录名 */
   loginName?: string;
+}
+
+/**
+ * 列出可通讯用户时的过滤条件。
+ * 支持按名称模糊匹配和用户唯一标识精确匹配。
+ */
+export interface ListUsersRequest {
+  /** 名称过滤，服务端按大小写不敏感子串匹配 */
+  name?: string;
+  /**
+   * 用户唯一标识过滤。
+   * 在 WebSocket 协议中，`{ nodeId: "0", userId: "0" }` 与省略该字段等价。
+   */
+  uid?: UserRef;
 }
 
 /**
