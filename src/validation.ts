@@ -1,15 +1,20 @@
 import {
   type Credentials,
   DeliveryMode,
+  type HTTPUpsertUserMetadataRequest,
+  type HTTPUserMetadataTypedValue,
   type ListUsersRequest,
   type Message,
   type MessageCursor,
   type ScanUserMetadataRequest,
   type SessionRef,
+  SystemUserMetadataKey,
   type UserRef
 } from "./types";
+import { bytesToUtf8, stringifyJson } from "./utils";
 
 const unsignedDecimalPattern = /^(0|[1-9][0-9]*)$/;
+const jsonNumberPattern = /^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$/;
 const userMetadataKeyMaxLength = 128;
 const userMetadataScanLimitMax = 1000;
 
@@ -204,6 +209,104 @@ export function validateListUsersRequest(request: ListUsersRequest, field = "req
 }
 
 /**
+ * 验证 HTTP metadata typed_value 的合法性。
+ *
+ * @param value - typed_value 输入对象
+ * @param field - 字段名称前缀，默认为 "typedValue"
+ * @throws 如果 kind 或对应值不合法则抛出错误
+ */
+export function validateHTTPUserMetadataTypedValue(value: HTTPUserMetadataTypedValue, field = "typedValue"): void {
+  switch (value.kind) {
+    case "bytes":
+      if (!(value.bytesValue instanceof Uint8Array)) {
+        throw new Error(`${field}.bytesValue is required`);
+      }
+      return;
+    case "bool":
+      if (typeof value.boolValue !== "boolean") {
+        throw new Error(`${field}.boolValue is required`);
+      }
+      return;
+    case "string":
+      if (typeof value.stringValue !== "string") {
+        throw new Error(`${field}.stringValue is required`);
+      }
+      return;
+    case "number":
+      validateJSONNumberValue(value.numberValue, `${field}.numberValue`);
+      return;
+    case "json":
+      validateHTTPUserMetadataJSONValue(value.jsonValue, `${field}.jsonValue`);
+      return;
+    default:
+      throw new Error(`${field}.kind is unsupported`);
+  }
+}
+
+/**
+ * 验证 metadata value 是否符合特定系统 key 的约束。
+ * 当前主要用于 `system.visible_to_others` 的布尔语义校验。
+ *
+ * @param key - metadata 键名
+ * @param value - 原始 bytes 值
+ * @param expiresAt - 可选过期时间
+ * @param field - 字段名称前缀，默认为 "request"
+ * @throws 如果系统键的值或 TTL 不合法则抛出错误
+ */
+export function validateUserMetadataValuePolicy(
+  key: string,
+  value: Uint8Array,
+  expiresAt?: string,
+  field = "request"
+): void {
+  if (key !== SystemUserMetadataKey.VisibleToOthers) {
+    return;
+  }
+  if (expiresAt != null && expiresAt !== "") {
+    throw new Error(`${field}.expiresAt is not supported for ${SystemUserMetadataKey.VisibleToOthers}`);
+  }
+  const normalized = bytesToUtf8(value).trim();
+  if (normalized !== "true" && normalized !== "false") {
+    throw new Error(`${field}.value must be UTF-8 "true" or "false" for ${SystemUserMetadataKey.VisibleToOthers}`);
+  }
+}
+
+/**
+ * 验证 HTTP metadata upsert 请求。
+ * 必须且只能提供 `value` 或 `typedValue`；同时会检查系统保留 key 的语义约束。
+ *
+ * @param request - HTTP metadata upsert 请求
+ * @param key - metadata 键名
+ * @param field - 字段名称前缀，默认为 "request"
+ * @throws 如果请求不合法则抛出错误
+ */
+export function validateHTTPUpsertUserMetadataRequest(
+  request: HTTPUpsertUserMetadataRequest,
+  key: string,
+  field = "request"
+): void {
+  const hasValue = "value" in request && request.value != null;
+  const hasTypedValue = "typedValue" in request && request.typedValue != null;
+  if (hasValue === hasTypedValue) {
+    throw new Error(`exactly one of ${field}.value or ${field}.typedValue must be provided`);
+  }
+  if (hasValue) {
+    validateUserMetadataValuePolicy(key, request.value, request.expiresAt, field);
+    return;
+  }
+  validateHTTPUserMetadataTypedValue(request.typedValue, `${field}.typedValue`);
+  if (key !== SystemUserMetadataKey.VisibleToOthers) {
+    return;
+  }
+  if (request.expiresAt != null && request.expiresAt !== "") {
+    throw new Error(`${field}.expiresAt is not supported for ${SystemUserMetadataKey.VisibleToOthers}`);
+  }
+  if (request.typedValue.kind !== "bool") {
+    throw new Error(`${field}.typedValue.kind must be "bool" for ${SystemUserMetadataKey.VisibleToOthers}`);
+  }
+}
+
+/**
  * 从消息对象中提取游标信息。
  * 游标包含消息所在节点的 nodeId 和消息的序列号 seq。
  *
@@ -283,6 +386,29 @@ function validateUserMetadataScanLimit(value: number, field: string): void {
   }
   if (value > userMetadataScanLimitMax) {
     throw new Error(`${field} cannot exceed ${userMetadataScanLimitMax}`);
+  }
+}
+
+function validateJSONNumberValue(value: number | bigint | string, field: string): void {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new Error(`${field} must be a finite JSON number`);
+    }
+    return;
+  }
+  if (typeof value === "bigint") {
+    return;
+  }
+  const normalized = value.trim();
+  if (!jsonNumberPattern.test(normalized)) {
+    throw new Error(`${field} must be a JSON number`);
+  }
+}
+
+function validateHTTPUserMetadataJSONValue(value: unknown, field: string): void {
+  const encoded = stringifyJson(value);
+  if (typeof encoded !== "string") {
+    throw new Error(`${field} must be JSON serializable`);
   }
 }
 
